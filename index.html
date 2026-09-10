@@ -132,23 +132,20 @@
         .camera-btn:hover { background: #e2e6ea; }
         .camera-btn svg { width: 26px; height: 26px; fill: var(--header-bg); }
 
-        /* Nuovo Layout Verticale a "Card" per i software */
+        /* Contenitore lista verticale: rimosso il 'gap' per gestire al meglio le espansioni */
         .segmented-control { 
             display: flex; 
             flex-direction: column; 
-            gap: 10px; 
             background: transparent; 
             padding: 0; 
-            margin-bottom: 15px; 
+            margin-bottom: 5px; 
         }
         
         .segmented-control label { 
-            position: relative;
             display: flex; 
             align-items: center; 
-            justify-content: center; 
-            background: #ffffff; 
-            border: 2px solid var(--border-color);
+            background: var(--disabled-bg); 
+            border: 2px solid transparent;
             padding: 12px 15px; 
             font-size: 16px; 
             font-weight: 500; 
@@ -157,11 +154,12 @@
             border-radius: var(--border-radius); 
             transition: all 0.2s; 
             min-height: 65px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 10px; 
         }
         
         .segmented-control input[type="radio"] { display: none; }
         
+        /* Stile pulsante selezionato (Attivo = Bianco, bordo blu, ombra) */
         .segmented-control input[type="radio"]:checked + label { 
             background: #ffffff; 
             color: var(--accent-color); 
@@ -170,21 +168,23 @@
             font-weight: 700; 
         }
 
+        /* Bilanciamento per la centratura matematica del testo */
         .option-icon {
-            position: absolute;
-            left: 15px;
             width: 38px;
             height: 38px;
             object-fit: contain;
-        }
+            flex-shrink: 0;
+        }}
 
         .option-text {
-            line-height: 1.2;
+            flex: 1;
             text-align: center;
+            padding-right: 38px; /* Compensa esattamente l'ingombro dell'icona a sinistra */
+            line-height: 1.2;
         }
 
-        .conditional-field { max-height: 0; overflow: hidden; opacity: 0; transition: all 0.3s ease-out; }
-        .conditional-field.visible { max-height: 110px; opacity: 1; margin-top: 10px; }
+        .conditional-field { max-height: 0; overflow: hidden; opacity: 0; transition: all 0.3s ease-out; margin-bottom: 0; }
+        .conditional-field.visible { max-height: 110px; opacity: 1; margin-bottom: 10px; margin-top: -5px; }
 
         /* Unified Action Buttons */
         #btn-create-ms { width: 100%; padding: 14px; font-size: 18px; font-weight: bold; border: none; border-radius: 50px; color: white; background: var(--accent-color); cursor: pointer; transition: all 0.3s; margin-bottom: 10px; box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2); }
@@ -304,26 +304,28 @@
                 <input type="radio" id="office-ms" name="office_type" value="ms_office" onchange="toggleFields(); validateForm();">
                 <label for="office-ms" id="lbl-opt-ms">Office 365</label>
                 
+                <!-- Il campo Office appare esattamente qui sotto -->
+                <div id="ms-office-field" class="conditional-field">
+                    <label class="form-label" id="lbl-office-key" style="font-size: 14px;">Product Key Office</label>
+                    <div class="input-with-icon">
+                        <input type="text" id="office-key" oninput="formatProductKey(this, '-')" spellcheck="false" autocorrect="off">
+                        <button type="button" class="camera-btn" onclick="openScanner('office-key', 'ocr')">
+                            <svg viewBox="0 0 24 24"><path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg>
+                        </button>
+                    </div>
+                </div>
+
                 <input type="radio" id="office-libre" name="office_type" value="libre_office" onchange="toggleFields(); validateForm();" checked>
                 <label for="office-libre" id="lbl-opt-libre">Libre Office</label>
-            </div>
-            
-            <div id="ms-office-field" class="conditional-field">
-                <label class="form-label" id="lbl-office-key" style="font-size: 14px;">Product Key Office</label>
-                <div class="input-with-icon">
-                    <input type="text" id="office-key" oninput="formatProductKey(this, '-')" spellcheck="false" autocorrect="off">
-                    <button type="button" class="camera-btn" onclick="openScanner('office-key', 'ocr')">
-                        <svg viewBox="0 0 24 24"><path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg>
-                </button>
-                </div>
             </div>
         </div>
 
         <div class="form-group">
             <div class="section-title" id="lbl-av-protection">Protezione antivirus</div>
             <div class="segmented-control">
-                <input type="radio" id="av-unedse" name="av_type" value="unedse" onchange="toggleFields(); validateForm();">
-                <label for="av-unedse" id="lbl-opt-unedse">Unieuro EveryDay Security</label>
+                <!-- Aggiornato a UnEvDi -->
+                <input type="radio" id="av-unevdi" name="av_type" value="unevdi" onchange="toggleFields(); validateForm();">
+                <label for="av-unevdi" id="lbl-opt-unevdi">Unieuro Everyday Digital</label>
                 
                 <input type="radio" id="av-norton" name="av_type" value="norton" onchange="toggleFields(); validateForm();">
                 <label for="av-norton" id="lbl-opt-norton">Norton 360 Deluxe</label>
@@ -333,15 +335,16 @@
                 
                 <input type="radio" id="av-none" name="av_type" value="none" onchange="toggleFields(); validateForm();" checked>
                 <label for="av-none" id="lbl-opt-none">Windows Defender</label>
-            </div>
-            
-            <div id="av-field" class="conditional-field">
-                <label class="form-label" id="av-key-label" style="font-size: 14px;">Product Key Antivirus</label>
-                <div class="input-with-icon">
-                    <input type="text" id="av-key" oninput="formatAvKey(this)" spellcheck="false" autocorrect="off">
-                    <button type="button" class="camera-btn" onclick="openScanner('av-key', 'ocr')">
-                        <svg viewBox="0 0 24 24"><path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg>
-                    </button>
+                
+                <!-- Questo blocco verrà spostato dinamicamente da JS sotto Norton o McAfee a seconda del click -->
+                <div id="av-field" class="conditional-field">
+                    <label class="form-label" id="av-key-label" style="font-size: 14px;">Product Key Antivirus</label>
+                    <div class="input-with-icon">
+                        <input type="text" id="av-key" oninput="formatAvKey(this)" spellcheck="false" autocorrect="off">
+                        <button type="button" class="camera-btn" onclick="openScanner('av-key', 'ocr')">
+                            <svg viewBox="0 0 24 24"><path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -505,7 +508,7 @@
         officeKeyPlaceholder: "XXXXX-XXXXX-XXXXX-XXXXX-XXXXX",
         
         avTitle: "Protezione antivirus",
-        avOptUnedse: "<img src='logos/logo_unevdi.png' class='option-icon'><span class='option-text'>Unieuro EveryDay Security</span>",
+        avOptUnevdi: "<img src='logos/logo_unevdi.png' class='option-icon'><span class='option-text'>Unieuro Everyday Digital</span>",
         avOptNorton: "<img src='logos/logo_norton.png' class='option-icon'><span class='option-text'>Norton 360 Deluxe</span>",
         avOptMcafee: "<img src='logos/logo_mcafee.png' class='option-icon'><span class='option-text'>McAfee Total Protection</span>",
         avOptNone: "<img src='logos/logo_defender.png' class='option-icon'><span class='option-text'>Windows Defender</span>",
@@ -730,7 +733,7 @@
         elements.officeKey.placeholder = DICTIONARY.officeKeyPlaceholder;
         document.getElementById('lbl-av-protection').innerText = DICTIONARY.avTitle;
         
-        document.getElementById('lbl-opt-unedse').innerHTML = DICTIONARY.avOptUnedse;
+        document.getElementById('lbl-opt-unevdi').innerHTML = DICTIONARY.avOptUnevdi;
         document.getElementById('lbl-opt-norton').innerHTML = DICTIONARY.avOptNorton;
         document.getElementById('lbl-opt-mcafee').innerHTML = DICTIONARY.avOptMcafee;
         document.getElementById('lbl-opt-none').innerHTML = DICTIONARY.avOptNone;
@@ -2079,7 +2082,7 @@
         officeKey: document.getElementById('office-key'),
         msOfficeField: document.getElementById('ms-office-field'),
         
-        avunevdi: document.getElementById('av-unevdi'),
+        avUnevdi: document.getElementById('av-unevdi'),
         avNorton: document.getElementById('av-norton'),
         avMcafee: document.getElementById('av-mcafee'),
         avNone: document.getElementById('av-none'),
@@ -2370,15 +2373,19 @@
     function toggleFields() {
         elements.msOfficeField.classList.toggle('visible', elements.officeMs.checked);
         
-        // La chiave antivirus serve SOLO per Norton e McAfee
         const showAvKey = elements.avNorton.checked || elements.avMcafee.checked;
-        elements.avField.classList.toggle('visible', showAvKey);
         
         if (showAvKey) {
+            // Magia DOM: sposta fisicamente il campo HTML sotto l'etichetta appena cliccata
+            const activeLabel = elements.avNorton.checked ? document.getElementById('lbl-opt-norton') : document.getElementById('lbl-opt-mcafee');
+            activeLabel.after(elements.avField);
+            
             elements.avKeyLabel.innerText = elements.avNorton.checked ? DICTIONARY.avNortonKeyLabel : DICTIONARY.avMcafeeKeyLabel;
             elements.avKey.placeholder = elements.avNorton.checked ? DICTIONARY.avKeyPlaceholderNorton : DICTIONARY.avKeyPlaceholderMcafee;
             if (elements.avKey.value !== '') formatAvKey(elements.avKey);
         }
+        
+        elements.avField.classList.toggle('visible', showAvKey);
         validateForm();
     }
 
