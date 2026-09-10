@@ -132,7 +132,11 @@
         .camera-btn:hover { background: #e2e6ea; }
         .camera-btn svg { width: 26px; height: 26px; fill: var(--header-bg); }
 
-        /* Contenitore lista verticale: rimosso il 'gap' per gestire al meglio le espansioni */
+        /* =======================================================
+           NUOVO LAYOUT VERTICALE A "CARD" PER I SOFTWARE
+           ======================================================= */
+           
+        /* Contenitore lista verticale */
         .segmented-control { 
             display: flex; 
             flex-direction: column; 
@@ -141,7 +145,8 @@
             margin-bottom: 5px; 
         }
         
-        .segmented-control label { 
+        /* 1. SFONDO GRIGIO INATTIVO (Si applica SOLO ai pulsanti radio, ignora i testi dei form) */
+        .segmented-control > input[type="radio"] + label { 
             display: flex; 
             align-items: center; 
             background: var(--disabled-bg); 
@@ -159,8 +164,8 @@
         
         .segmented-control input[type="radio"] { display: none; }
         
-        /* Stile pulsante selezionato (Attivo = Bianco, bordo blu, ombra) */
-        .segmented-control input[type="radio"]:checked + label { 
+        /* 2. SFONDO BIANCO ATTIVO */
+        .segmented-control > input[type="radio"]:checked + label { 
             background: #ffffff; 
             color: var(--accent-color); 
             border: 2px solid var(--accent-color);
@@ -168,23 +173,25 @@
             font-weight: 700; 
         }
 
-        /* Bilanciamento per la centratura matematica del testo */
+        /* 3. CENTRATURA AL NETTO DELL'ICONA */
         .option-icon {
             width: 38px;
             height: 38px;
             object-fit: contain;
             flex-shrink: 0;
-        }}
-
-        .option-text {
-            flex: 1;
-            text-align: center;
-            padding-right: 38px; /* Compensa esattamente l'ingombro dell'icona a sinistra */
-            line-height: 1.2;
+            margin-right: 15px; /* Spinge via il testo */
         }
 
+        .option-text {
+            flex: 1; /* Prende solo lo spazio rimanente a destra dell'icona */
+            text-align: center; /* Si centra matematicamente in quello spazio */
+            line-height: 1.2;
+            padding-right: 15px; /* Bilancia l'ingombro visivo dell'icona a sinistra */
+        }
+
+        /* Gestione dei campi a scomparsa (Product Key) sotto i pulsanti */
         .conditional-field { max-height: 0; overflow: hidden; opacity: 0; transition: all 0.3s ease-out; margin-bottom: 0; }
-        .conditional-field.visible { max-height: 110px; opacity: 1; margin-bottom: 10px; margin-top: -5px; }
+        .conditional-field.visible { max-height: 110px; opacity: 1; margin-bottom: 15px; margin-top: -5px; }
 
         /* Unified Action Buttons */
         #btn-create-ms { width: 100%; padding: 14px; font-size: 18px; font-weight: bold; border: none; border-radius: 50px; color: white; background: var(--accent-color); cursor: pointer; transition: all 0.3s; margin-bottom: 10px; box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2); }
