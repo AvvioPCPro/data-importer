@@ -284,11 +284,10 @@
         /* 08. OAUTH ACTION BUTTONS (MS ACCOUNT CREATION & IMPORT)                   */
         /* ========================================================================= */
         .action-card { 
-            position: relative;
             display: flex; 
             flex-direction: row;
             align-items: center; 
-            justify-content: center; /* Modificato: forza la centratura del contenuto */
+            justify-content: flex-start;
             width: 100%;
             background: var(--disabled-bg); 
             border: 2px solid transparent;
@@ -304,124 +303,55 @@
             outline: none;
         }
 
-        /* Mantiene lo spazio extra sotto il secondo pulsante, prima del campo Email */
-        #btnAuth {
-            margin-bottom: 15px;
-        }
+        #btnAuth { margin-bottom: 15px; }
 
-        .action-card svg {
-            position: absolute; /* Modificato: esce dal flusso e non disturba il testo */
-            left: 15px;
-            width: 32px;
-            height: 32px;
-            fill: currentColor;
-        }
+        .action-card svg { width: 32px; height: 32px; flex-shrink: 0; margin-right: 15px; fill: currentColor; }
 
         .action-text {
+            flex-grow: 1;
             text-align: center;
             line-height: 1.2;
-            width: 100%;
+            padding-right: 0; /* Compensazione rimossa: si centra nello spazio disponibile */
         }
 
-        /* Dynamic states managed by JavaScript */
-        .action-card.is-disabled {
-            background: var(--disabled-bg);
-            color: var(--text-muted);
-            cursor: not-allowed;
-            border-color: transparent;
-            box-shadow: none;
-        }
-
-        /* Modifica cruciale: rimuove qualsiasi sfondo/colore dai figli se disabilitato */
-        .action-card.is-disabled * {
-            background-color: transparent !important;
-            color: inherit !important;
-        }
-
-        .action-card.is-primary {
-            background: #ffffff;
-            color: var(--accent-color);
-            border-color: var(--accent-color);
-            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.15);
-            font-weight: 700;
-        }
-
-        .action-card.is-import {
-            background: #ffffff;
-            color: var(--import-color);
-            border-color: var(--import-color);
-            box-shadow: 0 4px 10px rgba(23, 162, 184, 0.15);
-            font-weight: 700;
-        }
-
-        .action-card.is-success {
-            background: #ffffff;
-            color: var(--success-color);
-            border-color: var(--success-color);
-            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.15);
-            font-weight: 700;
-        }
+        .action-card.is-disabled { background: var(--disabled-bg); color: var(--text-muted); cursor: not-allowed; border-color: transparent; box-shadow: none; }
+        .action-card.is-primary { background: #ffffff; color: var(--accent-color); border-color: var(--accent-color); box-shadow: 0 4px 10px rgba(0, 123, 255, 0.15); font-weight: 700; }
+        .action-card.is-import { background: #ffffff; color: var(--import-color); border-color: var(--import-color); box-shadow: 0 4px 10px rgba(23, 162, 184, 0.15); font-weight: 700; }
+        .action-card.is-success { background: #ffffff; color: var(--success-color); border-color: var(--success-color); box-shadow: 0 4px 10px rgba(40, 167, 69, 0.15); font-weight: 700; }
 
         /* ========================================================================= */
         /* 09. FINAL FORM SUBMISSION BUTTONS (LARGE ACTION CARDS)                    */
         /* ========================================================================= */
-        .submit-container { 
-            padding: 30px 0; 
-            background: transparent; 
-            text-align: center; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; 
-            align-items: center; 
-            width: 100%; 
-        }
+        .submit-container { padding: 30px 0; background: transparent; text-align: center; display: flex; flex-direction: column; gap: 15px; align-items: center; width: 100%; }
         
         .final-action-card { 
-            display: flex; 
-            flex-direction: row; 
-            align-items: center; 
-            justify-content: flex-start; 
-            width: 100%; 
-            max-width: 400px; 
-            padding: 18px 20px; 
-            font-size: 20px; 
-            font-weight: bold; 
-            border: none; 
-            border-radius: var(--border-radius); 
-            cursor: pointer; 
-            transition: all 0.3s; 
-            outline: none; 
-            min-height: 70px; 
+            display: flex; flex-direction: row; align-items: center; justify-content: flex-start; 
+            width: 100%; max-width: 400px; padding: 18px 20px; font-size: 20px; font-weight: bold; 
+            border: none; border-radius: var(--border-radius); cursor: pointer; transition: all 0.3s; 
+            outline: none; min-height: 70px; 
         }
         
-        .final-action-card svg { 
-            width: 30px; 
-            height: 30px; 
-            flex-shrink: 0; 
-            margin-right: 15px; 
-            fill: currentColor; 
-        }
+        .final-action-card svg { width: 30px; height: 30px; flex-shrink: 0; margin-right: 15px; fill: currentColor; }
         
-        .final-action-text { 
-            flex-grow: 1; 
-            text-align: center; 
-            line-height: 1.2;
-            padding-right: 45px; 
+        .final-action-text {
+            flex-grow: 1; text-align: center; line-height: 1.2;
+            padding-right: 0; /* Compensazione rimossa: si centra nello spazio disponibile */
         }
         
         #submit-btn { background: var(--success-color); color: white; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3); }
-        
         #reprint-btn { background: var(--reprint-color); color: white; }
         #reprint-btn:hover:not(:disabled):not(.is-disabled) { opacity: 0.9; }
 
-        /* Unified disabled state for ALL final action cards */
-        .final-action-card.is-disabled,
-        .final-action-card:disabled { 
-            background: var(--disabled-bg) !important; 
-            color: var(--text-muted) !important; 
-            cursor: not-allowed !important; 
-            box-shadow: none !important; 
-            transform: none !important; 
+        /* Forza colore grigio identico per tutti i bottoni finali inattivi */
+        .final-action-card.is-disabled, .final-action-card:disabled { 
+            background: var(--disabled-bg) !important; color: var(--text-muted) !important; 
+            cursor: not-allowed !important; box-shadow: none !important; transform: none !important; 
+        }
+        
+        /* Classe per l'accensione di Ristampa via JavaScript */
+        .final-action-card.is-success {
+            background: var(--success-color) !important; color: white !important;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3) !important;
         }
 
         /* ========================================================================= */
@@ -1090,8 +1020,8 @@
         validateForm(); 
         const currentSerial = elements.pcSerial.value.trim();
 
-        // Reset reprint button styling
-        elements.reprintBtn.style.background = "var(--reprint-color)";
+        // Rimuove lo stato di successo tramite le classi CSS invece che forzare i colori in linea
+        elements.reprintBtn.classList.remove('is-success');
 
         if (currentSerial.length < 5) return; 
 
@@ -1104,7 +1034,8 @@
                 const result = await response.json();
 
                 if (result.status === "success" && result.exists) {
-                    elements.reprintBtn.style.background = "var(--success-color)";
+                    // Accende il pulsante aggiungendo la classe dedicata
+                    elements.reprintBtn.classList.add('is-success');
                     if ("vibrate" in navigator) navigator.vibrate([50]);
                 }
             } catch (err) {
