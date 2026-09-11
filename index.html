@@ -299,8 +299,13 @@
             border-radius: var(--border-radius); 
             transition: all 0.2s; 
             min-height: 60px;
-            margin-bottom: 15px;
+            margin-bottom: 4px; /* <-- Spaziatura ridotta per uniformità con le altre tile */
             outline: none;
+        }
+
+        /* Mantiene lo spazio extra sotto il secondo pulsante, prima del campo Email */
+        #btnAuth {
+            margin-bottom: 15px;
         }
 
         .action-card svg {
@@ -315,7 +320,7 @@
             flex-grow: 1;
             text-align: center;
             line-height: 1.2;
-            padding-right: 0; 
+            padding-right: 47px; 
         }
 
         /* Dynamic states managed by JavaScript */
@@ -372,14 +377,15 @@
             justify-content: flex-start; 
             width: 100%; 
             max-width: 400px; 
-            padding: 16px 20px; 
+            padding: 18px 20px; /* <-- Padding aumentato per dare imponenza */
             font-size: 20px; 
             font-weight: bold; 
             border: none; 
-            border-radius: 50px; 
+            border-radius: var(--border-radius); /* <-- Angoli smussati coerenti con il resto del layout */
             cursor: pointer; 
             transition: all 0.3s; 
             outline: none; 
+            min-height: 70px; /* <-- Altezza maggiorata per distinguerli dalle card standard */
         }
         
         .final-action-card svg { 
@@ -394,7 +400,7 @@
             flex-grow: 1; 
             text-align: center; 
             line-height: 1.2;
-            padding-right: 0; 
+            padding-right: 45px; 
         }
         
         #submit-btn { background: var(--success-color); color: white; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3); }
@@ -615,11 +621,11 @@
         <!-- 18. HTML: FINAL ACTION BUTTONS                                            -->
         <!-- ========================================================================= -->
         <div class="submit-container">
-            <button id="submit-btn" class="final-action-card is-disabled">
-                <!-- Cloud Upload Icon -->
-                <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13h3l-5-5-5 5h3v4h4v-4z"/></svg>
-                <span class="final-action-text" id="lbl-btn-submit">Caricamento dati</span>
-            </button>
+            <<button id="submit-btn" class="final-action-card is-disabled">
+            <!-- Cloud Upload Icon -->
+            <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+            <span class="final-action-text" id="lbl-btn-submit">Caricamento dati</span>
+        </button>
             <button id="reprint-btn" class="final-action-card" onclick="handleReprint()">
                 <!-- Printer Icon -->
                 <svg viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
