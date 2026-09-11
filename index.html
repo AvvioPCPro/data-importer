@@ -18,6 +18,8 @@
         /* ========================================================================= */
         /* 02. ROOT VARIABLES & CSS RESET                                            */
         /* ========================================================================= */
+        
+        /* Forced disabling of automatic font scaling from iOS/Android accessibility settings */
         html {
             -webkit-text-size-adjust: 100%;
             text-size-adjust: 100%;
@@ -125,12 +127,14 @@
         .standard-input { width: 100%; border: 1px solid var(--border-color); padding: 12px 15px; font-size: 17px; border-radius: var(--border-radius); outline: none; box-sizing: border-box; }
         .standard-input:focus { border-color: var(--accent-color); }
 
+        /* Font adjustment for product keys */
         #office-key, #av-key { 
             font-size: 13px !important; 
             letter-spacing: 0px; 
             font-family: monospace !important;
         }
 
+        /* Specific override for iOS Safari constraints */
         @supports (-webkit-touch-callout: none) {
             #office-key, #av-key { 
                 font-size: 16px !important; 
@@ -145,15 +149,13 @@
         .camera-btn:hover { background: #e2e6ea; }
         .camera-btn svg { width: 26px; height: 26px; fill: var(--header-bg); }
 
-        .checkbox-group { display: flex; align-items: center; justify-content: flex-start; gap: 10px; cursor: pointer; padding: 5px 0; }
-        .checkbox-group input[type="checkbox"] { flex-shrink: 0; width: 20px; height: 20px; cursor: pointer; accent-color: var(--accent-color); }
-        .checkbox-group span, .checkbox-group label { font-size: 17px; cursor: pointer; user-select: none; text-align: left; line-height: 1.3; }
-
         .form-note { font-size: 13px; color: var(--text-muted); margin-top: -12px; margin-bottom: 5px; padding-left: 5px; font-weight: 500; }
 
         /* ========================================================================= */
         /* 05. RADIO CARDS (OFFICE & ANTIVIRUS SOFTWARE SELECTION)                   */
         /* ========================================================================= */
+        
+        /* Main vertical container for radio options */
         .segmented-control { 
             display: flex; 
             flex-direction: column; 
@@ -162,6 +164,7 @@
             margin-bottom: 5px; 
         }
         
+        /* Base button class (Inactive gray, reduced spacing) */
         .radio-card { 
             display: flex; 
             flex-direction: row;
@@ -177,11 +180,12 @@
             border-radius: var(--border-radius); 
             transition: all 0.2s; 
             min-height: 60px;
-            margin-bottom: 5px; 
+            margin-bottom: 4px; 
         }
         
         .segmented-control input[type="radio"] { display: none; }
         
+        /* White background & styling for the active selected button */
         .segmented-control input[type="radio"]:checked + .radio-card { 
             background: #ffffff; 
             color: var(--accent-color); 
@@ -190,24 +194,65 @@
             font-weight: 700; 
         }
 
+        /* Fixed dimension for icons and right offset to push text */
         .option-icon {
             width: 36px;
             height: 36px;
             object-fit: contain;
             flex-shrink: 0;
-            margin-right: 15px; 
-            position: static; 
+            margin-right: 12px; 
         }
 
+        /* Text fills EXACTLY the remaining space and centers within it */
         .option-text {
-            flex-grow: 1; 
+            flex: 1; 
             text-align: center; 
             line-height: 1.2;
-            padding-right: 0;
+            padding-right: 48px; /* Mathematical offset to balance the 36px icon + 12px margin */
         }
 
         /* ========================================================================= */
-        /* 06. CONDITIONAL FIELDS (PRODUCT KEY INPUT BOXES)                          */
+        /* 06. TOGGLE CARDS (CYBER PROTECTION & WINDOWS UPDATE)                      */
+        /* ========================================================================= */
+        .toggle-control { 
+            display: flex; 
+            flex-direction: column; 
+            background: transparent; 
+            padding: 0; 
+            margin-bottom: 5px; 
+        }
+        
+        .toggle-card { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            background: var(--disabled-bg); 
+            border: 2px solid transparent; 
+            padding: 12px 15px; 
+            font-size: 16px; 
+            font-weight: 500; 
+            color: var(--text-muted); 
+            cursor: pointer; 
+            border-radius: var(--border-radius); 
+            transition: all 0.2s; 
+            min-height: 60px; 
+            margin-bottom: 4px; 
+            text-align: center; 
+        }
+        
+        .toggle-control input[type="checkbox"] { display: none; }
+        
+        /* Activated state for toggles */
+        .toggle-control input[type="checkbox"]:checked + .toggle-card { 
+            background: #ffffff; 
+            color: var(--accent-color); 
+            border: 2px solid var(--accent-color); 
+            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.15); 
+            font-weight: 700; 
+        }
+
+        /* ========================================================================= */
+        /* 07. CONDITIONAL FIELDS (COLLAPSIBLE PRODUCT KEY BOXES)                    */
         /* ========================================================================= */
         .conditional-field { 
             max-height: 0; 
@@ -235,10 +280,8 @@
         }
 
         /* ========================================================================= */
-        /* 07. ACTION BUTTONS (SUBMIT, OAUTH, REPRINT)                               */
+        /* 08. OAUTH ACTION BUTTONS (MS ACCOUNT CREATION & IMPORT)                   */
         /* ========================================================================= */
-        
-        /* Stile base per i pulsanti Microsoft a forma di "Card" */
         .action-card { 
             display: flex; 
             flex-direction: row;
@@ -271,10 +314,10 @@
             flex-grow: 1;
             text-align: center;
             line-height: 1.2;
-            padding-right: 47px; /* Compensa matematicamente i 32px di icona + 15px di margine */
+            padding-right: 47px; /* Balances 32px SVG + 15px margin */
         }
 
-        /* Stati dinamici gestiti da JavaScript */
+        /* Dynamic states managed by JavaScript */
         .action-card.is-disabled {
             background: var(--disabled-bg);
             color: var(--text-muted);
@@ -307,15 +350,60 @@
             font-weight: 700;
         }
 
-        /* Pulsanti di chiusura form (Invariati) */
-        .submit-container { padding: 30px 0; background: transparent; text-align: center; display: flex; flex-direction: column; gap: 15px; align-items: center; width: 100%; }
-        #submit-btn { width: 100%; max-width: 400px; padding: 18px; font-size: 20px; font-weight: bold; border: none; border-radius: 50px; color: white; background: var(--success-color); cursor: pointer; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3); transition: all 0.3s; }
-        #submit-btn.is-disabled { background: var(--text-muted); cursor: not-allowed; box-shadow: none; transform: none !important; }
-        #reprint-btn { width: 100%; max-width: 400px; padding: 18px; font-size: 20px; font-weight: bold; border: none; border-radius: 50px; color: white; background: var(--reprint-color); cursor: pointer; transition: all 0.3s; }
+        /* ========================================================================= */
+        /* 09. FINAL FORM SUBMISSION BUTTONS (LARGE ACTION CARDS)                    */
+        /* ========================================================================= */
+        .submit-container { 
+            padding: 30px 0; 
+            background: transparent; 
+            text-align: center; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            align-items: center; 
+            width: 100%; 
+        }
+        
+        .final-action-card { 
+            display: flex; 
+            flex-direction: row; 
+            align-items: center; 
+            justify-content: flex-start; 
+            width: 100%; 
+            max-width: 400px; 
+            padding: 16px 20px; 
+            font-size: 20px; 
+            font-weight: bold; 
+            border: none; 
+            border-radius: 50px; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+            outline: none; 
+        }
+        
+        .final-action-card svg { 
+            width: 30px; 
+            height: 30px; 
+            flex-shrink: 0; 
+            margin-right: 15px; 
+            fill: currentColor; 
+        }
+        
+        .final-action-text { 
+            flex-grow: 1; 
+            text-align: center; 
+            line-height: 1.2;
+            padding-right: 45px; /* Balances 30px SVG + 15px margin */
+        }
+        
+        #submit-btn { background: var(--success-color); color: white; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3); }
+        #submit-btn.is-disabled { background: var(--text-muted); color: #dddddd; cursor: not-allowed; box-shadow: none; transform: none !important; }
+        
+        #reprint-btn { background: var(--reprint-color); color: white; }
         #reprint-btn:hover { opacity: 0.9; }
 
         /* ========================================================================= */
-        /* 08. FULLSCREEN MODALS & OVERLAYS                                          */
+        /* 10. FULLSCREEN MODALS & OVERLAYS                                          */
         /* ========================================================================= */
         .fullscreen-modal { position: fixed; top: 0; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(3px); }
         .fullscreen-modal.active { opacity: 1; pointer-events: auto; }
@@ -377,6 +465,9 @@
 </head>
 <body>
 
+    <!-- ========================================================================= -->
+    <!-- 11. HTML: HEADER AND NAVIGATION BARS                                      -->
+    <!-- ========================================================================= -->
     <header class="app-header">
         <img src="logo.png" alt="Logo" class="header-logo" onerror="this.style.display='none'">
         <div class="app-title" id="lbl-app-title">AvvioPC<span class="pro-badge">PRO</span></div>
@@ -388,7 +479,9 @@
 
     <main class="form-container">
         
-        <!-- SERIAL COMPONENT -->
+        <!-- ========================================================================= -->
+        <!-- 12. HTML: SERIAL AND ACCOUNT COMPONENTS                                   -->
+        <!-- ========================================================================= -->
         <div class="form-group">
             <div class="section-title" id="lbl-serial">Numero seriale del prodotto *</div>
             <div class="input-with-icon">
@@ -399,22 +492,20 @@
             </div>
         </div>
 
-        <!-- LOCAL ACCOUNT COMPONENT -->
         <div class="form-group">
             <div class="section-title" id="lbl-local-account">Account locale *</div>
             <input type="text" id="local-account" class="standard-input" style="text-transform: none;" oninput="formatLocalAccount(this)">
         </div>
 
-        <!-- OFFICE SUITE COMPONENT -->
+        <!-- ========================================================================= -->
+        <!-- 13. HTML: OFFICE SUITE COMPONENT                                          -->
+        <!-- ========================================================================= -->
         <div class="form-group">
             <div class="section-title" id="lbl-office-suite">Suite da ufficio</div>
             <div class="segmented-control">
                 
                 <input type="radio" id="office-ms" name="office_type" value="ms_office" onchange="toggleFields(); validateForm();">
                 <label for="office-ms" id="lbl-opt-ms" class="radio-card">Office 365</label>
-
-                <input type="radio" id="office-libre" name="office_type" value="libre_office" onchange="toggleFields(); validateForm();" checked>
-                <label for="office-libre" id="lbl-opt-libre" class="radio-card">Libre Office</label>
                 
                 <!-- Dynamic Field for Office Key (JS will move this under the selected button) -->
                 <div id="ms-office-field" class="conditional-field">
@@ -427,10 +518,14 @@
                     </div>
                 </div>
 
+                <input type="radio" id="office-libre" name="office_type" value="libre_office" onchange="toggleFields(); validateForm();" checked>
+                <label for="office-libre" id="lbl-opt-libre" class="radio-card">Libre Office</label>
             </div>
         </div>
 
-        <!-- ANTIVIRUS COMPONENT -->
+        <!-- ========================================================================= -->
+        <!-- 14. HTML: ANTIVIRUS PROTECTION COMPONENT                                  -->
+        <!-- ========================================================================= -->
         <div class="form-group">
             <div class="section-title" id="lbl-av-protection">Protezione antivirus</div>
             <div class="segmented-control">
@@ -441,13 +536,17 @@
                 <input type="radio" id="av-norton" name="av_type" value="norton" onchange="toggleFields(); validateForm();">
                 <label for="av-norton" id="lbl-opt-norton" class="radio-card">Norton 360 Deluxe</label>
                 
+                <!-- JS target area for dynamic conditional field -->
+                
                 <input type="radio" id="av-mcafee" name="av_type" value="mcafee" onchange="toggleFields(); validateForm();">
                 <label for="av-mcafee" id="lbl-opt-mcafee" class="radio-card">McAfee Total Protection</label>
+
+                <!-- JS target area for dynamic conditional field -->
 
                 <input type="radio" id="av-none" name="av_type" value="none" onchange="toggleFields(); validateForm();" checked>
                 <label for="av-none" id="lbl-opt-none" class="radio-card">Windows Defender</label>
                 
-                <!-- Dynamic Field for Antivirus Key (JS will move this under the selected button) -->
+                <!-- Dynamic Field for Antivirus Key (Default hidden state) -->
                 <div id="av-field" class="conditional-field">
                     <label class="form-label" id="av-key-label">Product Key Antivirus</label>
                     <div class="input-with-icon">
@@ -461,16 +560,20 @@
             </div>
         </div>
 
-        <!-- CYBER PROTECTION COMPONENT -->
+        <!-- ========================================================================= -->
+        <!-- 15. HTML: CYBER PROTECTION (TOGGLE CARD)                                  -->
+        <!-- ========================================================================= -->
         <div class="form-group">
             <div class="section-title" id="lbl-cyber-title">Unieuro Cyber Protection</div>
-            <label class="checkbox-group">
+            <div class="toggle-control">
                 <input type="checkbox" id="run-cyber" onchange="validateForm()">
-                <span id="lbl-cyber-check">Installa icona di attivazione<br>del servizio</span>
-            </label>
+                <label for="run-cyber" class="toggle-card" id="lbl-cyber-check">Installa icona servizio</label>
+            </div>
         </div>
 
-        <!-- MS ACCOUNT COMPONENT -->
+        <!-- ========================================================================= -->
+        <!-- 16. HTML: MICROSOFT OAUTH ACCOUNT COMPONENT                               -->
+        <!-- ========================================================================= -->
         <div class="form-group">
             <div class="section-title" id="lbl-ms-title">Account Microsoft *</div>
             
@@ -480,7 +583,8 @@
             </button>
             
             <button type="button" id="btnAuth" class="action-card is-disabled" onclick="handleImportClick()" disabled>
-                <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                <!-- Cloud Download Icon -->
+                <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v-4h-4v4H7l5 5 5-5h-3z"/></svg>
                 <span class="action-text" id="lbl-btn-auth">Importa account creato</span>
             </button>
             
@@ -491,25 +595,39 @@
             <input type="text" id="ms-password" class="standard-input" style="text-transform: none;">
         </div>
 
-        <!-- WINDOWS UPDATE COMPONENT -->
+        <!-- ========================================================================= -->
+        <!-- 17. HTML: WINDOWS UPDATE (TOGGLE CARD)                                    -->
+        <!-- ========================================================================= -->
         <div class="form-group">
             <div class="section-title" id="lbl-winupd-title">Aggiornamenti di sistema</div>
-            <label class="checkbox-group">
+            <div class="toggle-control">
                 <input type="checkbox" id="run-updates" onchange="validateForm()">
-                <span id="lbl-winupd-check">Eseguire Windows Update<br>a fine installazione</span>
-            </label>
+                <label for="run-updates" class="toggle-card" id="lbl-winupd-check">Esegui a fine installazione</label>
+            </div>
         </div>
         
         <div class="form-note">* = campo obbligatorio</div>
 
-        <!-- ACTION BUTTONS -->
+        <!-- ========================================================================= -->
+        <!-- 18. HTML: FINAL ACTION BUTTONS                                            -->
+        <!-- ========================================================================= -->
         <div class="submit-container">
-            <button id="submit-btn" class="is-disabled">Caricamento dati</button>
-            <button id="reprint-btn" onclick="handleReprint()">Ristampa report</button>
+            <button id="submit-btn" class="final-action-card is-disabled">
+                <!-- Cloud Upload Icon -->
+                <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13h3l-5-5-5 5h3v4h4v-4z"/></svg>
+                <span class="final-action-text" id="lbl-btn-submit">Caricamento dati</span>
+            </button>
+            <button id="reprint-btn" class="final-action-card" onclick="handleReprint()">
+                <!-- Printer Icon -->
+                <svg viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
+                <span class="final-action-text" id="lbl-btn-reprint">Ristampa report</span>
+            </button>
         </div>
     </main>
 
-    <!-- MODALS -->
+    <!-- ========================================================================= -->
+    <!-- 19. HTML: DIALOGS AND FULLSCREEN MODALS                                   -->
+    <!-- ========================================================================= -->
     <div id="custom-alert-modal" class="fullscreen-modal">
         <div class="operator-dialog" style="text-align: center;">
             <div class="alert-title">Avviso</div>
@@ -616,7 +734,7 @@
 
 <script>
     // =========================================================================
-    // 01. CONFIGURATION & I18N DICTIONARY
+    // 20. JS: CONFIGURATION & I18N DICTIONARY
     // =========================================================================
     const DICTIONARY = {
         appTitle: "AvvioPC <span class='pro-badge'>PRO</span>",
@@ -643,16 +761,16 @@
         avKeyPlaceholderMcafee: "XXXXX-XXXXX-XXXXX-XXXXX-XXXXX",
         
         cyberTitle: "Unieuro Cyber Protection",
-        cyberCheck: "Installa icona di attivazione<br>del servizio",
+        cyberCheck: "Installa icona servizio",
         msTitle: "Account Microsoft *",
         btnCreateMs: "Crea nuovo account Microsoft",
-		btnAuth: "Importa account creato",
+        btnAuth: "Importa account creato",
         msUserLabel: "Email",
         msUserPlaceholder: "nome.cognome@dominio",
         msPassLabel: "Password",
         btnFeedbackCustom: "✅ Copiata negli appunti!",
         winUpdTitle: "Aggiornamenti di sistema",
-        winUpdCheck: "Eseguire Windows Update<br>a fine installazione",
+        winUpdCheck: "Esegui a fine installazione",
         btnSubmit: "Caricamento dati",
         btnReprint: "Ristampa report",
         opModalTitle: "Impostazioni",
@@ -695,7 +813,7 @@
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwHRtrEUUpyIS3vjU3pB1wA57X25FNsrr2xaX2K1Jp2z5PvhGf1D_euM2kPSAIFCCs/exec';
 
     // =========================================================================
-    // 02. STATE MANAGEMENT & DOM CACHING
+    // 21. JS: STATE MANAGEMENT & DOM CACHING
     // =========================================================================
     let OPERATOR_DB = [];
     let currentOperatorId = localStorage.getItem('operator_id') || "00000";
@@ -771,7 +889,7 @@
     };
 
     // =========================================================================
-    // 03. DRAFT AUTOSAVE LOGIC
+    // 22. JS: DRAFT AUTOSAVE LOGIC
     // =========================================================================
     function saveDraft() {
         const draft = {
@@ -819,7 +937,7 @@
     }
 
     // =========================================================================
-    // 04. CUSTOM ALERT SYSTEM
+    // 23. JS: CUSTOM ALERT SYSTEM
     // =========================================================================
     function showAlert(msg, callback = null) {
         elements.alertMessage.innerHTML = msg;
@@ -836,7 +954,7 @@
     }
 
     // =========================================================================
-    // 05. INITIALIZATION & DATA FETCHING
+    // 24. JS: INITIALIZATION & DATA FETCHING
     // =========================================================================
     function initializeUIStrings() {
         document.getElementById('lbl-app-title').innerHTML = DICTIONARY.appTitle;
@@ -858,18 +976,17 @@
         document.getElementById('lbl-opt-none').innerHTML = DICTIONARY.avOptNone;
         
         document.getElementById('lbl-cyber-title').innerText = DICTIONARY.cyberTitle;
-        document.getElementById('lbl-cyber-check').innerHTML = DICTIONARY.cyberCheck;
+        document.getElementById('lbl-cyber-check').innerText = DICTIONARY.cyberCheck;
         document.getElementById('lbl-ms-title').innerText = DICTIONARY.msTitle;
-        elements.btnCreateMs.innerText = DICTIONARY.btnCreateMs;
-		document.getElementById('lbl-btn-create-ms').innerText = DICTIONARY.btnCreateMs;
-        document.getElementById('lbl-btn-auth').innerText = DICTIONARY.btnAuth;	
+        document.getElementById('lbl-btn-create-ms').innerText = DICTIONARY.btnCreateMs;
+        document.getElementById('lbl-btn-auth').innerText = DICTIONARY.btnAuth;
         document.getElementById('lbl-ms-username').innerText = DICTIONARY.msUserLabel;
         elements.msUsername.placeholder = DICTIONARY.msUserPlaceholder;
         document.getElementById('lbl-ms-password').innerText = DICTIONARY.msPassLabel;
         document.getElementById('lbl-winupd-title').innerText = DICTIONARY.winUpdTitle;
-        document.getElementById('lbl-winupd-check').innerHTML = DICTIONARY.winUpdCheck;
-        elements.submitBtn.innerText = DICTIONARY.btnSubmit;
-        elements.reprintBtn.innerText = DICTIONARY.btnReprint;
+        document.getElementById('lbl-winupd-check').innerText = DICTIONARY.winUpdCheck;
+        document.getElementById('lbl-btn-submit').innerText = DICTIONARY.btnSubmit;
+        document.getElementById('lbl-btn-reprint').innerText = DICTIONARY.btnReprint;
         document.getElementById('lbl-modal-op-title').innerText = DICTIONARY.opModalTitle;
         document.getElementById('lbl-modal-store-default').innerText = DICTIONARY.storeModalDefault;
         document.getElementById('lbl-modal-op-default').innerText = DICTIONARY.opModalDefault;
@@ -936,12 +1053,13 @@
     });
 
     // =========================================================================
-    // 06. FORM VALIDATION & UI DYNAMICS
+    // 25. JS: FORM VALIDATION & UI DYNAMICS
     // =========================================================================
     function handleSerialInput() {
         validateForm(); 
         const currentSerial = elements.pcSerial.value.trim();
 
+        // Reset reprint button styling
         elements.reprintBtn.style.background = "var(--reprint-color)";
 
         if (currentSerial.length < 5) return; 
@@ -1027,6 +1145,7 @@
         // --- 2. Dynamic Antivirus Layout ---
         const showAvKey = elements.avNorton.checked || elements.avMcafee.checked;
         
+        // DOM Magic: physically moves the HTML field below the clicked label
         if (elements.avNorton.checked) {
             document.getElementById('lbl-opt-norton').after(elements.avField);
         } else if (elements.avMcafee.checked) {
@@ -1065,10 +1184,10 @@
     }
 
     // =========================================================================
-    // 07. MICROSOFT OAUTH ENGINE
+    // 26. JS: MICROSOFT OAUTH ENGINE
     // =========================================================================
     function updateAuthButtonVisuals() {
-        // Pulisce tutti gli stati correnti
+        // Purge current class states
         elements.btnAuth.classList.remove('is-disabled', 'is-import', 'is-success');
 
         if (!isMsCreated) {
@@ -1139,7 +1258,7 @@
 
         window.open('https://signup.live.com/signup', '_blank');
 
-        // Feedback visivo di copia sul nuovo pulsante a Card
+        // Visual feedback for clipboard copy on the action card
         const textSpan = document.getElementById('lbl-btn-create-ms');
         const originalText = DICTIONARY.btnCreateMs;
         
@@ -1175,7 +1294,21 @@
     async function startMicrosoftAuth() {
         document.getElementById('lbl-btn-auth').innerText = "Inizializzazione...";
         elements.btnAuth.disabled = true;
-        // [ ... resto della funzione invariato ... ]
+
+        currentAuthSession = "session_" + Math.random().toString(36).substring(2, 10);
+        const popup = window.open('', '_blank');
+
+        try {
+            const response = await fetch(GOOGLE_SCRIPT_URL + "?action=getAuthUrl&session_id=" + currentAuthSession);
+            const data = await response.json();
+
+            if (!data.url) {
+                popup.close();
+                showAlert("CRITICAL: Backend returned empty URL.");
+                document.getElementById('lbl-btn-auth').innerText = DICTIONARY.btnAuth;
+                elements.btnAuth.disabled = false;
+                return;
+            }
 
             popup.location.href = data.url;
             document.getElementById('lbl-btn-auth').innerText = "In attesa...";
@@ -1193,7 +1326,9 @@
         pollingInterval = setInterval(async () => {
             attempts++;
             try {
-                // [ ... fetch data ... ]
+                const response = await fetch(GOOGLE_SCRIPT_URL + "?action=getEmail&session_id=" + currentAuthSession);
+                const data = await response.json();
+
                 if (data.email) {
                     clearInterval(pollingInterval);
                     acquiredEmail = data.email;
@@ -1204,7 +1339,9 @@
                     showAlert(DICTIONARY.alertOauthSuccess + data.email);
                     validateForm();
                 }
-            } catch (e) { console.log("Polling backend..."); }
+            } catch (e) {
+                console.log("Polling backend...");
+            }
 
             if (attempts > 40) {
                 clearInterval(pollingInterval);
@@ -1216,7 +1353,7 @@
     }
 
     // =========================================================================
-    // 08. DROPDOWNS & OPERATOR AUTHENTICATION
+    // 27. JS: DROPDOWNS & OPERATOR AUTHENTICATION
     // =========================================================================
     function initializeStoreDropdown() {
         const uniqueStores = [...new Set(OPERATOR_DB.map(op => String(op.storeId).trim()))];
@@ -1311,7 +1448,7 @@
     function updateOperatorUI() { elements.operatorBadge.innerText = currentOperatorId; validateForm(); }
 
     // =========================================================================
-    // 09. CAMERA & SCANNER ENGINE
+    // 28. JS: CAMERA & SCANNER ENGINE
     // =========================================================================
     async function openScanner(targetId, mode) {
         currentInputId = targetId; currentMode = mode;
@@ -1527,7 +1664,7 @@
     };
 
     // =========================================================================
-    // 10. CLOUD COMMUNICATION (SUBMIT & REPRINT)
+    // 29. JS: CLOUD COMMUNICATION (SUBMIT & REPRINT)
     // =========================================================================
     elements.submitBtn.onclick = async () => {
         if (!isFormValidCheck()) { showAlert("Campi obbligatori mancanti. Completare il modulo prima di procedere."); return; }
