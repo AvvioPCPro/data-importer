@@ -377,11 +377,10 @@
         }
         
         .final-action-card { 
-            position: relative;
             display: flex; 
             flex-direction: row; 
             align-items: center; 
-            justify-content: center; /* Modificato: centratura matematica */
+            justify-content: flex-start; 
             width: 100%; 
             max-width: 400px; 
             padding: 18px 20px; 
@@ -396,39 +395,33 @@
         }
         
         .final-action-card svg { 
-            position: absolute; /* Modificato: esce dal flusso */
-            left: 20px;
             width: 30px; 
             height: 30px; 
+            flex-shrink: 0; 
+            margin-right: 15px; 
             fill: currentColor; 
         }
         
         .final-action-text { 
+            flex-grow: 1; 
             text-align: center; 
             line-height: 1.2;
-            width: 100%; 
+            padding-right: 45px; 
         }
         
         #submit-btn { background: var(--success-color); color: white; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3); }
+        
         #reprint-btn { background: var(--reprint-color); color: white; }
-        #reprint-btn:hover { opacity: 0.9; }
+        #reprint-btn:hover:not(:disabled):not(.is-disabled) { opacity: 0.9; }
 
-        /* Gestione universale e rigorosa dello stato disabilitato */
+        /* Unified disabled state for ALL final action cards */
         .final-action-card.is-disabled,
-        .final-action-card:disabled {
-            background: var(--disabled-bg) !important;
-            color: var(--text-muted) !important;
-            cursor: not-allowed;
-            box-shadow: none !important;
-            transform: none !important;
-            border-color: transparent !important;
-        }
-
-        /* Uccide i colori "anomali" dei figli quando il pulsante è disabilitato */
-        .final-action-card.is-disabled *,
-        .final-action-card:disabled * {
-            background-color: transparent !important;
-            color: inherit !important;
+        .final-action-card:disabled { 
+            background: var(--disabled-bg) !important; 
+            color: var(--text-muted) !important; 
+            cursor: not-allowed !important; 
+            box-shadow: none !important; 
+            transform: none !important; 
         }
 
         /* ========================================================================= */
