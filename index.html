@@ -333,25 +333,23 @@
         
         .final-action-card svg { width: 30px; height: 30px; flex-shrink: 0; margin-right: 15px; fill: currentColor; }
         
-        .final-action-text {
-            flex-grow: 1; text-align: center; line-height: 1.2;
-            padding-right: 0; /* Compensazione rimossa: si centra nello spazio disponibile */
-        }
+        .final-action-text { flex-grow: 1; text-align: center; line-height: 1.2; padding-right: 0; }
         
         #submit-btn { background: var(--success-color); color: white; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3); }
-        #reprint-btn { background: var(--reprint-color); color: white; }
-        #reprint-btn:hover:not(:disabled):not(.is-disabled) { opacity: 0.9; }
-
-        /* Forza colore grigio identico per tutti i bottoni finali inattivi */
+        
+        /* Base inactive state for Reprint (Light Gray) */
+        #reprint-btn { background: var(--disabled-bg); color: var(--text-muted); box-shadow: none; }
+        
+        /* Explicit Disabled state for uniformity */
         .final-action-card.is-disabled, .final-action-card:disabled { 
             background: var(--disabled-bg) !important; color: var(--text-muted) !important; 
             cursor: not-allowed !important; box-shadow: none !important; transform: none !important; 
         }
         
-        /* Classe per l'accensione di Ristampa via JavaScript */
+        /* Active state for Reprint (injected by JS upon valid serial) */
         .final-action-card.is-success {
             background: var(--success-color) !important; color: white !important;
-            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3) !important;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3) !important; cursor: pointer !important;
         }
 
         /* ========================================================================= */
@@ -1020,7 +1018,8 @@
         validateForm(); 
         const currentSerial = elements.pcSerial.value.trim();
 
-        // Rimuove lo stato di successo tramite le classi CSS invece che forzare i colori in linea
+        // CRITICAL FIX: Purges inline styles overriding the CSS
+        elements.reprintBtn.style.background = "";
         elements.reprintBtn.classList.remove('is-success');
 
         if (currentSerial.length < 5) return; 
@@ -1034,7 +1033,6 @@
                 const result = await response.json();
 
                 if (result.status === "success" && result.exists) {
-                    // Accende il pulsante aggiungendo la classe dedicata
                     elements.reprintBtn.classList.add('is-success');
                     if ("vibrate" in navigator) navigator.vibrate([50]);
                 }
