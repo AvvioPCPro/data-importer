@@ -145,27 +145,36 @@
             margin-bottom: 5px; 
         }
         
-        /* 1. SFONDO GRIGIO INATTIVO (Si applica SOLO ai pulsanti radio, ignora i testi dei form) */
-        .segmented-control > input[type="radio"] + label { 
+        /* Contenitore lista verticale */
+        .segmented-control { 
+            display: flex; 
+            flex-direction: column; 
+            background: transparent; 
+            padding: 0; 
+            margin-bottom: 5px; 
+        }
+        
+        /* 1. CLASSE SPECIFICA PER I PULSANTI (Grigio inattivo, spazio ridotto) */
+        .radio-card { 
             display: flex; 
             align-items: center; 
             background: var(--disabled-bg); 
             border: 2px solid transparent;
-            padding: 12px 15px; 
+            padding: 10px 15px; 
             font-size: 16px; 
             font-weight: 500; 
             color: var(--text-muted); 
             cursor: pointer; 
             border-radius: var(--border-radius); 
             transition: all 0.2s; 
-            min-height: 65px;
-            margin-bottom: 10px; 
+            min-height: 60px;
+            margin-bottom: 4px; /* Spazio ridotto tra i pulsanti */
         }
         
         .segmented-control input[type="radio"] { display: none; }
         
-        /* 2. SFONDO BIANCO ATTIVO */
-        .segmented-control > input[type="radio"]:checked + label { 
+        /* Sfondo bianco solo per il pulsante attivo */
+        .segmented-control input[type="radio"]:checked + .radio-card { 
             background: #ffffff; 
             color: var(--accent-color); 
             border: 2px solid var(--accent-color);
@@ -173,25 +182,23 @@
             font-weight: 700; 
         }
 
-        /* 3. CENTRATURA AL NETTO DELL'ICONA */
+        /* 2. CENTRATURA TESTO AL NETTO DELL'ICONA */
         .option-icon {
-            width: 38px;
-            height: 38px;
+            width: 36px;
+            height: 36px;
             object-fit: contain;
             flex-shrink: 0;
-            margin-right: 15px; /* Spinge via il testo */
+            margin-right: 12px; /* Stabilisce lo spazio netto a destra dell'icona */
         }
 
         .option-text {
-            flex: 1; /* Prende solo lo spazio rimanente a destra dell'icona */
-            text-align: center; /* Si centra matematicamente in quello spazio */
-            line-height: 1.2;
-            padding-right: 15px; /* Bilancia l'ingombro visivo dell'icona a sinistra */
+            flex: 1; /* Il testo riempie ESATTAMENTE lo spazio rimanente... */
+            text-align: center; /* ...e si centra al suo interno */
         }
 
-        /* Gestione dei campi a scomparsa (Product Key) sotto i pulsanti */
+        /* 3. Comportamento a comparsa della piccola etichetta */
         .conditional-field { max-height: 0; overflow: hidden; opacity: 0; transition: all 0.3s ease-out; margin-bottom: 0; }
-        .conditional-field.visible { max-height: 110px; opacity: 1; margin-bottom: 15px; margin-top: -5px; }
+        .conditional-field.visible { max-height: 110px; opacity: 1; margin-bottom: 15px; margin-top: 2px; }
 
         /* Unified Action Buttons */
         #btn-create-ms { width: 100%; padding: 14px; font-size: 18px; font-weight: bold; border: none; border-radius: 50px; color: white; background: var(--accent-color); cursor: pointer; transition: all 0.3s; margin-bottom: 10px; box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2); }
@@ -305,13 +312,12 @@
             <input type="text" id="local-account" class="standard-input" style="text-transform: none;" oninput="formatLocalAccount(this)">
         </div>
 
-        <div class="form-group">
+        <div class="<div class="form-group">
             <div class="section-title" id="lbl-office-suite">Suite da ufficio</div>
             <div class="segmented-control">
                 <input type="radio" id="office-ms" name="office_type" value="ms_office" onchange="toggleFields(); validateForm();">
-                <label for="office-ms" id="lbl-opt-ms">Office 365</label>
+                <label for="office-ms" id="lbl-opt-ms" class="radio-card">Office 365</label>
                 
-                <!-- Il campo Office appare esattamente qui sotto -->
                 <div id="ms-office-field" class="conditional-field">
                     <label class="form-label" id="lbl-office-key" style="font-size: 14px;">Product Key Office</label>
                     <div class="input-with-icon">
@@ -323,27 +329,30 @@
                 </div>
 
                 <input type="radio" id="office-libre" name="office_type" value="libre_office" onchange="toggleFields(); validateForm();" checked>
-                <label for="office-libre" id="lbl-opt-libre">Libre Office</label>
+                <label for="office-libre" id="lbl-opt-libre" class="radio-card">Libre Office</label>
             </div>
         </div>
 
         <div class="form-group">
             <div class="section-title" id="lbl-av-protection">Protezione antivirus</div>
             <div class="segmented-control">
-                <!-- Aggiornato a UnEvDi -->
                 <input type="radio" id="av-unevdi" name="av_type" value="unevdi" onchange="toggleFields(); validateForm();">
-                <label for="av-unevdi" id="lbl-opt-unevdi">Unieuro Everyday Digital</label>
+                <label for="av-unevdi" id="lbl-opt-unevdi" class="radio-card">Unieuro Everyday Digital</label>
                 
                 <input type="radio" id="av-norton" name="av_type" value="norton" onchange="toggleFields(); validateForm();">
-                <label for="av-norton" id="lbl-opt-norton">Norton 360 Deluxe</label>
+                <label for="av-norton" id="lbl-opt-norton" class="radio-card">Norton 360 Deluxe</label>
+                
+                <!-- SPAZIO VUOTO: JS sposterà qui il campo a scomparsa se clicchi Norton -->
                 
                 <input type="radio" id="av-mcafee" name="av_type" value="mcafee" onchange="toggleFields(); validateForm();">
-                <label for="av-mcafee" id="lbl-opt-mcafee">McAfee Total Protection</label>
+                <label for="av-mcafee" id="lbl-opt-mcafee" class="radio-card">McAfee Total Protection</label>
                 
+                <!-- SPAZIO VUOTO: JS sposterà qui il campo a scomparsa se clicchi McAfee -->
+
                 <input type="radio" id="av-none" name="av_type" value="none" onchange="toggleFields(); validateForm();" checked>
-                <label for="av-none" id="lbl-opt-none">Windows Defender</label>
+                <label for="av-none" id="lbl-opt-none" class="radio-card">Windows Defender</label>
                 
-                <!-- Questo blocco verrà spostato dinamicamente da JS sotto Norton o McAfee a seconda del click -->
+                <!-- Posizione di base del campo Product Key (Invisibile) -->
                 <div id="av-field" class="conditional-field">
                     <label class="form-label" id="av-key-label" style="font-size: 14px;">Product Key Antivirus</label>
                     <div class="input-with-icon">
@@ -908,15 +917,22 @@
     function toggleFields() {
         elements.msOfficeField.classList.toggle('visible', elements.officeMs.checked);
         
-        // La chiave antivirus serve SOLO per Norton e McAfee
         const showAvKey = elements.avNorton.checked || elements.avMcafee.checked;
-        elements.avField.classList.toggle('visible', showAvKey);
+        
+        // Risoluzione bug spostamento: sposta fisicamente il campo DOM subito sotto il pulsante selezionato
+        if (elements.avNorton.checked) {
+            document.getElementById('lbl-opt-norton').after(elements.avField);
+        } else if (elements.avMcafee.checked) {
+            document.getElementById('lbl-opt-mcafee').after(elements.avField);
+        }
         
         if (showAvKey) {
             elements.avKeyLabel.innerText = elements.avNorton.checked ? DICTIONARY.avNortonKeyLabel : DICTIONARY.avMcafeeKeyLabel;
             elements.avKey.placeholder = elements.avNorton.checked ? DICTIONARY.avKeyPlaceholderNorton : DICTIONARY.avKeyPlaceholderMcafee;
             if (elements.avKey.value !== '') formatAvKey(elements.avKey);
         }
+        
+        elements.avField.classList.toggle('visible', showAvKey);
         validateForm();
     }
 
