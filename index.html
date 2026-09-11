@@ -194,21 +194,22 @@
             font-weight: 700; 
         }
 
-        /* Fixed dimension for icons and right offset to push text */
+        /* Generic option-icon class for Images and SVGs */
         .option-icon {
             width: 36px;
             height: 36px;
             object-fit: contain;
             flex-shrink: 0;
             margin-right: 12px; 
+            position: static; 
         }
 
-        /* Text fills EXACTLY the remaining space and centers within it */
+        /* Centers the text strictly in the remaining free space */
         .option-text {
             flex: 1; 
             text-align: center; 
             line-height: 1.2;
-            padding-right: 48px; /* Mathematical offset to balance the 36px icon + 12px margin */
+            padding-right: 0; 
         }
 
         /* ========================================================================= */
@@ -224,11 +225,12 @@
         
         .toggle-card { 
             display: flex; 
+            flex-direction: row;
             align-items: center; 
-            justify-content: center; 
+            justify-content: flex-start; 
             background: var(--disabled-bg); 
             border: 2px solid transparent; 
-            padding: 12px 15px; 
+            padding: 10px 15px; 
             font-size: 16px; 
             font-weight: 500; 
             color: var(--text-muted); 
@@ -237,7 +239,6 @@
             transition: all 0.2s; 
             min-height: 60px; 
             margin-bottom: 4px; 
-            text-align: center; 
         }
         
         .toggle-control input[type="checkbox"] { display: none; }
@@ -314,7 +315,7 @@
             flex-grow: 1;
             text-align: center;
             line-height: 1.2;
-            padding-right: 47px; /* Balances 32px SVG + 15px margin */
+            padding-right: 0; 
         }
 
         /* Dynamic states managed by JavaScript */
@@ -393,7 +394,7 @@
             flex-grow: 1; 
             text-align: center; 
             line-height: 1.2;
-            padding-right: 45px; /* Balances 30px SVG + 15px margin */
+            padding-right: 0; 
         }
         
         #submit-btn { background: var(--success-color); color: white; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3); }
@@ -505,7 +506,7 @@
             <div class="segmented-control">
                 
                 <input type="radio" id="office-ms" name="office_type" value="ms_office" onchange="toggleFields(); validateForm();">
-                <label for="office-ms" id="lbl-opt-ms" class="radio-card">Office 365</label>
+                <label for="office-ms" id="lbl-opt-ms" class="radio-card"></label>
                 
                 <!-- Dynamic Field for Office Key (JS will move this under the selected button) -->
                 <div id="ms-office-field" class="conditional-field">
@@ -519,7 +520,7 @@
                 </div>
 
                 <input type="radio" id="office-libre" name="office_type" value="libre_office" onchange="toggleFields(); validateForm();" checked>
-                <label for="office-libre" id="lbl-opt-libre" class="radio-card">Libre Office</label>
+                <label for="office-libre" id="lbl-opt-libre" class="radio-card"></label>
             </div>
         </div>
 
@@ -531,20 +532,20 @@
             <div class="segmented-control">
                 
                 <input type="radio" id="av-unevdi" name="av_type" value="unevdi" onchange="toggleFields(); validateForm();">
-                <label for="av-unevdi" id="lbl-opt-unevdi" class="radio-card">Unieuro Everyday Digital</label>
+                <label for="av-unevdi" id="lbl-opt-unevdi" class="radio-card"></label>
                 
                 <input type="radio" id="av-norton" name="av_type" value="norton" onchange="toggleFields(); validateForm();">
-                <label for="av-norton" id="lbl-opt-norton" class="radio-card">Norton 360 Deluxe</label>
+                <label for="av-norton" id="lbl-opt-norton" class="radio-card"></label>
                 
                 <!-- JS target area for dynamic conditional field -->
                 
                 <input type="radio" id="av-mcafee" name="av_type" value="mcafee" onchange="toggleFields(); validateForm();">
-                <label for="av-mcafee" id="lbl-opt-mcafee" class="radio-card">McAfee Total Protection</label>
+                <label for="av-mcafee" id="lbl-opt-mcafee" class="radio-card"></label>
 
                 <!-- JS target area for dynamic conditional field -->
 
                 <input type="radio" id="av-none" name="av_type" value="none" onchange="toggleFields(); validateForm();" checked>
-                <label for="av-none" id="lbl-opt-none" class="radio-card">Windows Defender</label>
+                <label for="av-none" id="lbl-opt-none" class="radio-card"></label>
                 
                 <!-- Dynamic Field for Antivirus Key (Default hidden state) -->
                 <div id="av-field" class="conditional-field">
@@ -567,7 +568,8 @@
             <div class="section-title" id="lbl-cyber-title">Unieuro Cyber Protection</div>
             <div class="toggle-control">
                 <input type="checkbox" id="run-cyber" onchange="validateForm()">
-                <label for="run-cyber" class="toggle-card" id="lbl-cyber-check">Installa icona servizio</label>
+                <!-- Content injected dynamically via DICTIONARY.cyberCheck -->
+                <label for="run-cyber" class="toggle-card" id="lbl-cyber-check"></label>
             </div>
         </div>
 
@@ -584,7 +586,7 @@
             
             <button type="button" id="btnAuth" class="action-card is-disabled" onclick="handleImportClick()" disabled>
                 <!-- Cloud Download Icon -->
-                <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v-4h-4v4H7l5 5 5-5h-3z"/></svg>
+                <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
                 <span class="action-text" id="lbl-btn-auth">Importa account creato</span>
             </button>
             
@@ -599,10 +601,11 @@
         <!-- 17. HTML: WINDOWS UPDATE (TOGGLE CARD)                                    -->
         <!-- ========================================================================= -->
         <div class="form-group">
-            <div class="section-title" id="lbl-winupd-title">Aggiornamenti di sistema</div>
+            <div class="section-title" id="lbl-winupd-title">Windows Update</div>
             <div class="toggle-control">
                 <input type="checkbox" id="run-updates" onchange="validateForm()">
-                <label for="run-updates" class="toggle-card" id="lbl-winupd-check">Esegui a fine installazione</label>
+                <!-- Content injected dynamically via DICTIONARY.winUpdCheck -->
+                <label for="run-updates" class="toggle-card" id="lbl-winupd-check"></label>
             </div>
         </div>
         
@@ -761,7 +764,8 @@
         avKeyPlaceholderMcafee: "XXXXX-XXXXX-XXXXX-XXXXX-XXXXX",
         
         cyberTitle: "Unieuro Cyber Protection",
-        cyberCheck: "Installa icona servizio",
+        cyberCheck: "<img src='logos/logo_cyber.png' class='option-icon'><span class='option-text'>Installa icona servizio</span>",
+        
         msTitle: "Account Microsoft *",
         btnCreateMs: "Crea nuovo account Microsoft",
         btnAuth: "Importa account creato",
@@ -769,10 +773,13 @@
         msUserPlaceholder: "nome.cognome@dominio",
         msPassLabel: "Password",
         btnFeedbackCustom: "✅ Copiata negli appunti!",
-        winUpdTitle: "Aggiornamenti di sistema",
-        winUpdCheck: "Esegui a fine installazione",
+        
+        winUpdTitle: "Windows Update",
+        winUpdCheck: "<svg class='option-icon' viewBox='0 0 24 24' fill='currentColor'><path d='M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z'/></svg><span class='option-text'>Esegui a fine installazione</span>",
+        
         btnSubmit: "Caricamento dati",
         btnReprint: "Ristampa report",
+        
         opModalTitle: "Impostazioni",
         storeModalDefault: "-- Seleziona Negozio --",
         opModalDefault: "-- Seleziona Operatore --",
@@ -976,15 +983,18 @@
         document.getElementById('lbl-opt-none').innerHTML = DICTIONARY.avOptNone;
         
         document.getElementById('lbl-cyber-title').innerText = DICTIONARY.cyberTitle;
-        document.getElementById('lbl-cyber-check').innerText = DICTIONARY.cyberCheck;
+        document.getElementById('lbl-cyber-check').innerHTML = DICTIONARY.cyberCheck; 
+        
         document.getElementById('lbl-ms-title').innerText = DICTIONARY.msTitle;
         document.getElementById('lbl-btn-create-ms').innerText = DICTIONARY.btnCreateMs;
         document.getElementById('lbl-btn-auth').innerText = DICTIONARY.btnAuth;
         document.getElementById('lbl-ms-username').innerText = DICTIONARY.msUserLabel;
         elements.msUsername.placeholder = DICTIONARY.msUserPlaceholder;
         document.getElementById('lbl-ms-password').innerText = DICTIONARY.msPassLabel;
+        
         document.getElementById('lbl-winupd-title').innerText = DICTIONARY.winUpdTitle;
-        document.getElementById('lbl-winupd-check').innerText = DICTIONARY.winUpdCheck;
+        document.getElementById('lbl-winupd-check').innerHTML = DICTIONARY.winUpdCheck;
+        
         document.getElementById('lbl-btn-submit').innerText = DICTIONARY.btnSubmit;
         document.getElementById('lbl-btn-reprint').innerText = DICTIONARY.btnReprint;
         document.getElementById('lbl-modal-op-title').innerText = DICTIONARY.opModalTitle;
