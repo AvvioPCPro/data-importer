@@ -13,6 +13,8 @@
     <link rel="icon" type="image/png" sizes="512x512" href="icona-app.png">
     <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@zxing/library@latest"></script>
+    <!-- LIBRERIA AGGIUNTA PER LA CRITTOGRAFIA -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
 <style>
         /* ========================================================================= */
@@ -311,7 +313,7 @@
             flex-grow: 1;
             text-align: center;
             line-height: 1.2;
-            padding-right: 0; /* Compensazione rimossa: si centra nello spazio disponibile */
+            padding-right: 0;
         }
 
         .action-card.is-disabled { background: var(--disabled-bg); color: var(--text-muted); cursor: not-allowed; border-color: transparent; box-shadow: none; }
@@ -685,6 +687,15 @@
     <canvas id="hidden-canvas"></canvas>
 
 <script>
+    // CHIAVE SEGRETA AGGIUNTA PER LA CRITTOGRAFIA - DA COPIARE NEGLI ALTRI SCRIPT
+    const ENCRYPTION_KEY = "AvvioPC_SecureKey_2026!";
+
+    // FUNZIONE DI CRITTOGRAFIA E2EE
+    function encryptData(text) {
+        if (!text) return "";
+        return CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
+    }
+
     // =========================================================================
     // 20. JS: CONFIGURATION & I18N DICTIONARY
     // =========================================================================
@@ -1018,7 +1029,6 @@
         validateForm(); 
         const currentSerial = elements.pcSerial.value.trim();
 
-        // CRITICAL FIX: Purges inline styles overriding the CSS
         elements.reprintBtn.style.background = "";
         elements.reprintBtn.classList.remove('is-success');
 
@@ -1096,16 +1106,13 @@
     }
 
     function toggleFields() {
-        // --- 1. Dynamic Office Layout ---
         if (elements.officeMs.checked) {
             document.getElementById('lbl-opt-ms').after(elements.msOfficeField);
         }
         elements.msOfficeField.classList.toggle('visible', elements.officeMs.checked);
         
-        // --- 2. Dynamic Antivirus Layout ---
         const showAvKey = elements.avNorton.checked || elements.avMcafee.checked;
         
-        // DOM Magic: physically moves the HTML field below the clicked label
         if (elements.avNorton.checked) {
             document.getElementById('lbl-opt-norton').after(elements.avField);
         } else if (elements.avMcafee.checked) {
@@ -1147,7 +1154,6 @@
     // 26. JS: MICROSOFT OAUTH ENGINE
     // =========================================================================
     function updateAuthButtonVisuals() {
-        // Purge current class states
         elements.btnAuth.classList.remove('is-disabled', 'is-import', 'is-success');
 
         if (!isMsCreated) {
@@ -1218,7 +1224,6 @@
 
         window.open('https://signup.live.com/signup', '_blank');
 
-        // Visual feedback for clipboard copy on the action card
         const textSpan = document.getElementById('lbl-btn-create-ms');
         const originalText = DICTIONARY.btnCreateMs;
         
@@ -1624,20 +1629,26 @@
     };
 
     // =========================================================================
-    // 29. JS: CLOUD COMMUNICATION (SUBMIT & REPRINT)
+    // 29. JS: CLOUD COMMUNICATION CON PAYLOAD CRITTOGRAFATO (SUBMIT)
     // =========================================================================
     elements.submitBtn.onclick = async () => {
         if (!isFormValidCheck()) { showAlert("Campi obbligatori mancanti. Completare il modulo prima di procedere."); return; }
         elements.submitBtn.disabled = true; elements.loadingOverlay.classList.add('active');
         const finalPassword = elements.msPassword.value.trim();
         
+        // PAYLOAD MODIFICATO PER LA CRITTOGRAFIA E2EE
         const payload = {
             action: "new", operator_id: currentOperatorId, store_id: localStorage.getItem('store_id') || "UNKNOWN",
-            pc_serial: elements.pcSerial.value.trim(), local_account: elements.localAccount.value.trim(),
-            office_suite: document.querySelector('input[name="office_type"]:checked').value, office_key: elements.officeKey.value,
-            antivirus: document.querySelector('input[name="av_type"]:checked').value, antivirus_key: elements.avKey.value,
-            cyber: elements.runCyber.checked ? "Yes" : "No", microsoft_account: elements.msUsername.value.trim(),
-            microsoft_password: finalPassword, windows_update: elements.runUpdates.checked ? "Yes" : "No", timestamp: new Date().toISOString()
+            pc_serial: elements.pcSerial.value.trim(), 
+            local_account: encryptData(elements.localAccount.value.trim()),
+            office_suite: document.querySelector('input[name="office_type"]:checked').value, 
+            office_key: encryptData(elements.officeKey.value),
+            antivirus: document.querySelector('input[name="av_type"]:checked').value, 
+            antivirus_key: encryptData(elements.avKey.value),
+            cyber: elements.runCyber.checked ? "Yes" : "No", 
+            microsoft_account: encryptData(elements.msUsername.value.trim()),
+            microsoft_password: encryptData(finalPassword), 
+            windows_update: elements.runUpdates.checked ? "Yes" : "No", timestamp: new Date().toISOString()
         };
         
         try {
