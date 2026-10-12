@@ -800,6 +800,7 @@
     let currentInputId = null;
     let streamTrack = null;
     let barcodeInterval = null;
+	let currentOcrRemaining = null;
 
     const zxingReader = new ZXing.BrowserMultiFormatReader();
 
@@ -1415,9 +1416,50 @@
     // =========================================================================
     // 28. JS: CAMERA & SCANNER ENGINE
     // =========================================================================
-    async function openScanner(targetId, mode) {
+    async function fetchOcrStatus() {
+        try {
+            const url = `${GOOGLE_SCRIPT_URL}?action=get_ocr_status&t=${new Date().getTime()}`;
+            const res = await fetch(url);
+            const data = await res.json();
+
+            if (data.status === "success") {
+                currentOcrRemaining = data.remaining;
+                updateScannerTitleWithQuota(data.remaining);
+            }
+        } catch (e) {
+            console.log("WARN: OCR status fetch failed: " + e.message);
+        }
+    }
+
+    function updateScannerTitleWithQuota(remaining) {
+        const titleEl = document.getElementById('scanner-title');
+
+        let subText;
+        let color;
+
+        if (remaining === 0) {
+            subText = "nessun riconoscimento automatico disponibile";
+            color = "#ff6b6b";
+        } else if (remaining < 50) {
+            subText = `${remaining} riconoscimenti automatici disponibili`;
+            color = "#ffd93d";
+        } else {
+            subText = `${remaining} riconoscimenti automatici disponibili`;
+            color = "#90ee90";
+        }
+
+        titleEl.innerHTML = `${DICTIONARY.scanTitleOcr}<br><span style="font-size:13px;font-weight:normal;color:${color};">(${subText})</span>`;
+    }
+	
+	async function openScanner(targetId, mode) {
         currentInputId = targetId; currentMode = mode;
-        document.getElementById('scanner-title').innerText = mode === 'barcode' ? DICTIONARY.scanTitleBarcode : DICTIONARY.scanTitleOcr;
+        if (mode === 'barcode') {
+			document.getElementById('scanner-title').innerText = DICTIONARY.scanTitleBarcode;
+		} else {
+			document.getElementById('scanner-title').innerText = DICTIONARY.scanTitleOcr;
+			currentOcrRemaining = null;
+			fetchOcrStatus();
+		}
         elements.scannerModal.classList.add('active');
         
         if (mode === 'barcode') {
@@ -1546,7 +1588,17 @@
             const data = await res.json();
 
             if (data.status === "error") {
+                if (data.reason === "quota_exceeded" && currentOcrRemaining !== null) {
+                    currentOcrRemaining = 0;
+                    updateScannerTitleWithQuota(0);
+                }
                 throw new Error(data.message);
+            }
+
+            // Vision API ha consumato una scansione: aggiorna il contatore locale
+            if (currentOcrRemaining !== null && currentOcrRemaining > 0) {
+                currentOcrRemaining--;
+                updateScannerTitleWithQuota(currentOcrRemaining);
             }
 
             let rawText = data.text.toUpperCase();
@@ -1622,7 +1674,7 @@
                 elements.video.play(); 
             }
         } catch(e) { 
-            elements.modalStatus.innerText = "CRITICAL: Cloud OCR transmission failed. " + e.message; 
+            elements.modalStatus.innerText = e.message; 
             elements.captureBtn.disabled = false; 
             elements.video.play(); 
         }
