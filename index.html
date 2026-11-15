@@ -696,14 +696,11 @@
     <canvas id="hidden-canvas"></canvas>
 
 <script>
-    // CHIAVE SEGRETA AGGIUNTA PER LA CRITTOGRAFIA - DA COPIARE NEGLI ALTRI SCRIPT
-    const ENCRYPTION_KEY = "AvvioPC_SecureKey_2026!";
+    // CHIAVE API PER IL FRONTEND (Deve corrispondere a quella in Code.gs)
+    const APP_API_KEY = "AvvioPC_WebApp_Token_2026_XYZ";
 
-    // FUNZIONE DI CRITTOGRAFIA E2EE
-    function encryptData(text) {
-        if (!text) return "";
-        return CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
-    }
+    // Recupera il token di sessione salvato in precedenza
+		let sessionToken = localStorage.getItem('avviopc_session_token') || "";
 
     // =========================================================================
     // 20. JS: CONFIGURATION & I18N DICTIONARY
@@ -870,7 +867,10 @@
     // =========================================================================
     // 22. JS: DRAFT AUTOSAVE LOGIC
     // =========================================================================
-    function saveDraft() {
+        function saveDraft() {
+        // Se il form è bloccato, non salvare
+        if (elements.existingRecordBanner && elements.existingRecordBanner.style.display === 'block') return;
+
         const draft = {
             pcSerial: elements.pcSerial.value,
             localAccount: elements.localAccount.value,
@@ -879,16 +879,9 @@
             avType: document.querySelector('input[name="av_type"]:checked')?.value,
             avKey: elements.avKey.value,
             runCyber: elements.runCyber.checked,
-            msUsername: elements.msUsername.value,
-            msPassword: elements.msPassword.value,
             runUpdates: elements.runUpdates.checked
+            // RIMOSSI: msUsername e msPassword per sicurezza GDPR
         };
-		
-		// Se il banner del record esistente è visibile, blocca il salvataggio della bozza
-        if (elements.existingRecordBanner && elements.existingRecordBanner.style.display === 'block') {
-            return; 
-        }
-		
         localStorage.setItem('avviopc_draft', JSON.stringify(draft));
     }
 
@@ -910,8 +903,6 @@
                 }
                 if (draft.avKey) elements.avKey.value = draft.avKey;
                 if (draft.runCyber !== undefined) elements.runCyber.checked = draft.runCyber;
-                if (draft.msUsername) elements.msUsername.value = draft.msUsername;
-                if (draft.msPassword) elements.msPassword.value = draft.msPassword;
                 if (draft.runUpdates !== undefined) elements.runUpdates.checked = draft.runUpdates;
                 
                 toggleFields();
@@ -1012,7 +1003,8 @@
     async function fetchOperatorsFromServer() {
         try {
             elements.storeDropdown.innerHTML = `<option value="000">${DICTIONARY.opModalLoading}</option>`;
-            const safeUrl = `${GOOGLE_SCRIPT_URL}?t=${new Date().getTime()}`;
+            // Aggiunto APP_API_KEY
+            const safeUrl = `${GOOGLE_SCRIPT_URL}?action=get_operators&api_key=${APP_API_KEY}&t=${new Date().getTime()}`;
             const response = await fetch(safeUrl);
             const result = await response.json();
             if (result.status === "success") {
@@ -1043,38 +1035,31 @@
     // =========================================================================
     // 25. JS: FORM VALIDATION & UI DYNAMICS
     // =========================================================================
-    async function handleSerialInput() {
+	async function handleSerialInput() {
         validateForm(); 
         const currentSerial = elements.pcSerial.value.trim().toUpperCase();
-        elements.pcSerial.value = currentSerial; // Force uppercase
+        elements.pcSerial.value = currentSerial;
 
         elements.reprintBtn.style.background = "";
         elements.reprintBtn.classList.remove('is-success');
 
-        // Sblocca il form se l'utente sta cancellando il seriale
-        if (currentSerial.length < 5) { 
-            unlockForm();
-            return; 
-        }
+        if (currentSerial.length < 5) { unlockForm(); return; }
 
         clearTimeout(serialCheckTimeout);
         
         serialCheckTimeout = setTimeout(async () => {
             try {
-                const safeUrl = `${GOOGLE_SCRIPT_URL}?action=check_serial&serial=${encodeURIComponent(currentSerial)}&t=${new Date().getTime()}`;
+                // Aggiunto APP_API_KEY
+                const safeUrl = `${GOOGLE_SCRIPT_URL}?action=check_serial&serial=${encodeURIComponent(currentSerial)}&api_key=${APP_API_KEY}&t=${new Date().getTime()}`;
                 const response = await fetch(safeUrl);
                 const result = await response.json();
 
                 if (result.status === "success") {
                     if (result.exists && result.record) {
-                        // SERIALE TROVATO -> LOCK DEL FORM E POPOLAMENTO
                         elements.reprintBtn.classList.add('is-success');
                         if ("vibrate" in navigator) navigator.vibrate([50]);
-                        
                         lockFormAndPopulate(result.record);
-                        
                     } else {
-                        // SERIALE NUOVO -> SBLOCCO
                         unlockForm();
                     }
                 }
@@ -1086,59 +1071,47 @@
 
     function lockFormAndPopulate(record) {
         const dateStr = record.timestamp ? new Date(record.timestamp).toLocaleDateString('it-IT') : "N/D";
-        
-        // Mostra Banner
         elements.existingRecordBanner.style.display = 'block';
-        elements.existingRecordDetails.innerHTML = `Registrato il <b>${dateStr}</b> dall'operatore <b>${record.operator_id}</b> (Negozio: ${record.store_id}).<br>Impossibile sovrascrivere i dati. Eliminare il record per procedere con una nuova configurazione.`;
+        // Usiamo textContent/escape per prevenire XSS
+        elements.existingRecordDetails.innerHTML = `Registrato il <b>${dateStr}</b> dall'operatore <b>${record.operator_id.replace(/</g, "&lt;")}</b> (Negozio: ${record.store_id.replace(/</g, "&lt;")}).<br>Impossibile sovrascrivere i dati. Eliminare il record per procedere.`;
         
-        // Decripta e Popola i campi
         try {
-            elements.localAccount.value = CryptoJS.AES.decrypt(record.local_account, ENCRYPTION_KEY).toString(CryptoJS.enc.Utf8);
+            // I dati arrivano già decriptati dal server
+            elements.localAccount.value = record.local_account || "";
             
-            // Office
-            const decOfficeKey = CryptoJS.AES.decrypt(record.office_key, ENCRYPTION_KEY).toString(CryptoJS.enc.Utf8);
             if (record.office_suite === 'ms_office') {
                 elements.officeMs.checked = true;
-                elements.officeKey.value = decOfficeKey;
+                elements.officeKey.value = record.office_key || "";
             } else {
                 document.querySelector('input[name="office_type"][value="libre_office"]').checked = true;
             }
 
-            // Antivirus
-            const decAvKey = CryptoJS.AES.decrypt(record.antivirus_key, ENCRYPTION_KEY).toString(CryptoJS.enc.Utf8);
-            const avType = record.antivirus.toLowerCase();
+            const avType = (record.antivirus || "none").toLowerCase();
             const avRadio = document.querySelector(`input[name="av_type"][value="${avType}"]`);
             if (avRadio) {
                 avRadio.checked = true;
-                elements.avKey.value = decAvKey;
+                elements.avKey.value = record.antivirus_key || "";
             } else {
                 elements.avNone.checked = true;
             }
 
-            // Cyber & Windows Update
             elements.runCyber.checked = (record.cyber === "Yes");
             elements.runUpdates.checked = (record.windows_update === "Yes");
 
-            // Account Microsoft
-            elements.msUsername.value = CryptoJS.AES.decrypt(record.microsoft_account, ENCRYPTION_KEY).toString(CryptoJS.enc.Utf8);
-            elements.msPassword.value = CryptoJS.AES.decrypt(record.microsoft_password, ENCRYPTION_KEY).toString(CryptoJS.enc.Utf8);
+            elements.msUsername.value = record.microsoft_account || "";
+            elements.msPassword.value = record.microsoft_password || "";
 
-            toggleFields(); // Aggiorna le classi CSS/visibilità dei campi condizionali
+            toggleFields(); 
             
-            // BLOCCA TUTTI GLI INPUT
             const inputs = document.querySelectorAll('main.form-container input, main.form-container select');
             inputs.forEach(el => el.disabled = true);
-            
-            // Mantieni attivo il tasto Reprint
             elements.reprintBtn.disabled = false;
-
-            // Disabilita il tasto di submit
             elements.submitBtn.disabled = true;
             elements.submitBtn.classList.add('is-disabled');
 
         } catch (e) {
-            console.error("Decryption error during lock:", e);
-            showAlert("Errore critico durante la decifratura dei dati. Contattare l'assistenza.");
+            console.error("Error populating form:", e);
+            showAlert("Errore critico durante il caricamento dei dati.");
         }
     }
 
@@ -1538,27 +1511,44 @@
         const storeId = elements.storeDropdown.value;
         const opId = elements.operatorDropdown.value;
         const pin = elements.operatorPin.value;
+        
         if (storeId === "000" || opId === "00000") return;
         if (!/^\d{4}$/.test(pin)) { showAlert(DICTIONARY.alertPinLength); return; }
-        const op = OPERATOR_DB.find(o => o.id === opId);
-        const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pin));
-        const hash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-        if (hash !== op.pinHash.trim().toLowerCase()) { showAlert(DICTIONARY.alertPinInvalid); elements.operatorPin.value = ''; return; }
         
-        if (elements.chkEnableAlerts.checked) {
-            localStorage.removeItem('hide_pwd_alert');
-            localStorage.removeItem('hide_import_alert');
-        } else {
-            localStorage.setItem('hide_pwd_alert', 'true');
-            localStorage.setItem('hide_import_alert', 'true');
-        }
+        // Invio PIN al backend per la verifica
+        try {
+            const res = await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "login", operator_id: opId, pin: pin }),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            });
+            const data = await res.json();
+            
+            if (data.status === "success" && data.token) {
+                sessionToken = data.token;
+                localStorage.setItem('avviopc_session_token', sessionToken);
+                
+                if (elements.chkEnableAlerts.checked) {
+                    localStorage.removeItem('hide_pwd_alert');
+                    localStorage.removeItem('hide_import_alert');
+                } else {
+                    localStorage.setItem('hide_pwd_alert', 'true');
+                    localStorage.setItem('hide_import_alert', 'true');
+                }
 
-        currentOperatorId = opId;
-        localStorage.setItem('operator_id', opId);
-        localStorage.setItem('store_id', storeId); 
-        elements.operatorPin.value = ''; 
-        updateOperatorUI();
-        closeOperatorModal();
+                currentOperatorId = opId;
+                localStorage.setItem('operator_id', opId);
+                localStorage.setItem('store_id', storeId); 
+                elements.operatorPin.value = ''; 
+                updateOperatorUI();
+                closeOperatorModal();
+            } else {
+                showAlert(data.message || DICTIONARY.alertPinInvalid); 
+                elements.operatorPin.value = '';
+            }
+        } catch (e) {
+            showAlert("Errore di rete durante l'autenticazione.");
+        }
     }
 
     function updateOperatorUI() { elements.operatorBadge.innerText = currentOperatorId; validateForm(); }
@@ -1568,7 +1558,7 @@
     // =========================================================================
     async function fetchOcrStatus() {
         try {
-            const url = `${GOOGLE_SCRIPT_URL}?action=get_ocr_status&t=${new Date().getTime()}`;
+            const url = `${GOOGLE_SCRIPT_URL}?action=get_ocr_status&api_key=${APP_API_KEY}&t=${new Date().getTime()}`;
             const res = await fetch(url);
             const data = await res.json();
 
@@ -1726,7 +1716,8 @@
         try {
             const payload = {
                 action: "ocr",
-                image_data: base64Image
+                image_data: base64Image,
+				api_key: APP_API_KEY
             };
 
             const res = await fetch(GOOGLE_SCRIPT_URL, {
@@ -1835,24 +1826,28 @@
     // =========================================================================
     // 29. JS: CLOUD COMMUNICATION CON PAYLOAD CRITTOGRAFATO (SUBMIT)
     // =========================================================================
-    elements.submitBtn.onclick = async () => {
-        if (!isFormValidCheck()) { showAlert("Campi obbligatori mancanti. Completare il modulo prima di procedere."); return; }
+        elements.submitBtn.onclick = async () => {
+        if (!isFormValidCheck()) { showAlert("Campi obbligatori mancanti."); return; }
         elements.submitBtn.disabled = true; elements.loadingOverlay.classList.add('active');
-        const finalPassword = elements.msPassword.value.trim();
         
-        // PAYLOAD MODIFICATO PER LA CRITTOGRAFIA E2EE
+        // INVIO IN CHIARO (Il server farà la crittografia E2EE)
         const payload = {
-            action: "new", operator_id: currentOperatorId, store_id: localStorage.getItem('store_id') || "UNKNOWN",
+            action: "new", 
+            operator_id: currentOperatorId, 
+            store_id: localStorage.getItem('store_id') || "UNKNOWN",
             pc_serial: elements.pcSerial.value.trim(), 
-            local_account: encryptData(elements.localAccount.value.trim()),
+            local_account: elements.localAccount.value.trim(), // In chiaro
             office_suite: document.querySelector('input[name="office_type"]:checked').value, 
-            office_key: encryptData(elements.officeKey.value),
+            office_key: elements.officeKey.value, // In chiaro
             antivirus: document.querySelector('input[name="av_type"]:checked').value, 
-            antivirus_key: encryptData(elements.avKey.value),
+            antivirus_key: elements.avKey.value, // In chiaro
             cyber: elements.runCyber.checked ? "Yes" : "No", 
-            microsoft_account: encryptData(elements.msUsername.value.trim()),
-            microsoft_password: encryptData(finalPassword), 
-            windows_update: elements.runUpdates.checked ? "Yes" : "No", timestamp: new Date().toISOString()
+            microsoft_account: elements.msUsername.value.trim(), // In chiaro
+            microsoft_password: elements.msPassword.value.trim(), // In chiaro
+            windows_update: elements.runUpdates.checked ? "Yes" : "No", 
+            timestamp: new Date().toISOString(),
+            api_key: APP_API_KEY,
+            token: sessionToken
         };
         
         try {
@@ -1861,11 +1856,8 @@
             if (data.status === "error") throw new Error(data.message);
             
             localStorage.removeItem('avviopc_draft');
-
             elements.loadingOverlay.classList.remove('active'); 
-            showAlert(DICTIONARY.alertUploadSuccess, () => {
-                location.reload();
-            });
+            showAlert(DICTIONARY.alertUploadSuccess, () => { location.reload(); });
         } catch (e) {
             elements.loadingOverlay.classList.remove('active'); 
             showAlert(DICTIONARY.alertUploadError + e.message);
@@ -1874,18 +1866,50 @@
         }
     };
 
+    async function handleDeleteRecord() {
+        const sn = elements.pcSerial.value.trim();
+        if (!sn) return;
+        if (!confirm(`⚠️ ATTENZIONE!\n\nStai per eliminare PERMANENTEMENTE il record di ${sn}.\nProcedere?`)) return;
+
+        elements.loadingOverlay.classList.add('active');
+        const payload = { action: "delete_record", pc_serial: sn, api_key: APP_API_KEY, token: sessionToken };
+
+        try {
+            const res = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+            const result = await res.json();
+            elements.loadingOverlay.classList.remove('active');
+            
+            if (result.status === "success") {
+                showAlert("Record eliminato con successo. Il form è ora sbloccato.", () => {
+                    elements.localAccount.value = "";
+                    elements.officeKey.value = "";
+                    elements.avKey.value = "";
+                    elements.msUsername.value = "";
+                    generateRandomPassword();
+                    elements.existingRecordBanner.style.display = 'none';
+                    unlockForm();
+                });
+            } else {
+                showAlert("Errore: " + result.message);
+            }
+        } catch(e) {
+            elements.loadingOverlay.classList.remove('active');
+            showAlert("Errore di rete. Impossibile eliminare il record.");
+        }
+    }
+
     async function handleReprint() {
         const sn = elements.pcSerial.value.trim();
-        if (!sn) { showAlert("Numero seriale del prodotto mancante per la ristampa."); return; }
-        if (currentOperatorId === "00000") { showAlert("Autenticazione operatore richiesta."); return; }
+        if (!sn) { showAlert("Numero seriale mancante."); return; }
+        if (currentOperatorId === "00000" || !sessionToken) { showAlert("Autenticazione operatore richiesta."); return; }
         
         elements.reprintBtn.disabled = true; elements.loadingOverlay.classList.add('active');
-        const payload = { action: "reprint", store_id: localStorage.getItem('store_id'), pc_serial: sn };
+        const payload = { action: "reprint", store_id: localStorage.getItem('store_id'), pc_serial: sn, api_key: APP_API_KEY, token: sessionToken };
         try {
             const res = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
             const result = await res.json();
             elements.loadingOverlay.classList.remove('active'); 
-            showAlert(result.message);
+            showAlert(result.message || (result.status === "success" ? "Ristampa inviata." : "Errore."));
         } catch(e) { 
             elements.loadingOverlay.classList.remove('active'); 
             showAlert("Errore di rete. Richiesta fallita."); 
