@@ -916,10 +916,12 @@
     // 23. JS: CUSTOM ALERT SYSTEM
     // =========================================================================
     function showAlert(msg, callback = null) {
-        elements.alertMessage.innerHTML = msg;
-        elements.customAlertModal.classList.add('active');
-        customAlertCallback = callback;
-    }
+    // Trasforma i caratteri speciali in entità HTML per prevenire esecuzioni di script
+    const safeMsg = String(msg).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
+    elements.alertMessage.innerHTML = safeMsg;
+    elements.customAlertModal.classList.add('active');
+    customAlertCallback = callback;
+}
 
     function closeCustomAlert() {
         elements.customAlertModal.classList.remove('active');
@@ -1235,13 +1237,16 @@
             document.getElementById('lbl-opt-mcafee').after(elements.avField);
         }
         
-        // --- NUOVA LOGICA: LINK UNEVDI -> CYBER PROTECTION ---
+        // --- LOGICA CYBER PROTECTION (Sempre cliccabile) ---
         if (elements.avUnevdi.checked) {
             elements.runCyber.checked = true;
-            // Forziamo l'aggiornamento visivo del toggle card
-            elements.runCyber.dispatchEvent(new Event('change'));
+        } else {
+            elements.runCyber.checked = false;
         }
-        // -----------------------------------------------------
+        
+        // Aggiorna la grafica del toggle
+        elements.runCyber.dispatchEvent(new Event('change'));
+        // ---------------------------------------------------
         
         if (showAvKey) {
             elements.avKeyLabel.innerText = elements.avNorton.checked ? DICTIONARY.avNortonKeyLabel : DICTIONARY.avMcafeeKeyLabel;
@@ -1384,11 +1389,16 @@
         document.getElementById('lbl-btn-auth').innerText = "Inizializzazione...";
         elements.btnAuth.disabled = true;
 
-        currentAuthSession = "session_" + Math.random().toString(36).substring(2, 10);
-        const popup = window.open('', '_blank');
-
         try {
+            // Recupera UUID sicuro dal backend
+            const uuidRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=get_uuid&api_key=${APP_API_KEY}`);
+            const uuidData = await uuidRes.json();
+            if (!uuidData.uuid) throw new Error("Errore generazione UUID");
+            currentAuthSession = uuidData.uuid;
+
+            const popup = window.open('', '_blank');
             const response = await fetch(GOOGLE_SCRIPT_URL + "?action=getAuthUrl&session_id=" + currentAuthSession);
+            // ... resto del codice invariato ...
             const data = await response.json();
 
             if (!data.url) {
@@ -1507,19 +1517,31 @@
     
     function closeOperatorModal() { elements.operatorModal.classList.remove('active'); }
 
-    async function saveOperatorSelection() {
+        async function saveOperatorSelection() {
         const storeId = elements.storeDropdown.value;
         const opId = elements.operatorDropdown.value;
-        const pin = elements.operatorPin.value;
+        
+        // FIX: Estrae il PIN e rimuove qualsiasi cosa che non sia un numero
+        const rawPin = elements.operatorPin.value;
+        const pin = rawPin.replace(/\D/g, ''); // \D significa "tutto ciò che non è un numero"
         
         if (storeId === "000" || opId === "00000") return;
-        if (!/^\d{4}$/.test(pin)) { showAlert(DICTIONARY.alertPinLength); return; }
         
-        // Invio PIN al backend per la verifica
+        // Controllo di sicurezza
+        if (pin.length !== 4) { 
+            showAlert(DICTIONARY.alertPinLength); 
+            return; 
+        }
+        
         try {
             const res = await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
-                body: JSON.stringify({ action: "login", operator_id: opId, pin: pin }),
+                body: JSON.stringify({ 
+                    action: "login", 
+                    operator_id: opId, 
+                    pin: pin, // Inviamo il PIN pulito
+                    api_key: APP_API_KEY
+                }),
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' }
             });
             const data = await res.json();
