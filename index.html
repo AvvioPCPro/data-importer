@@ -52,7 +52,16 @@
     .segmented-control input[type="radio"]:checked + .radio-card, .toggle-control input[type="checkbox"]:checked + .toggle-card { background: #ffffff; color: var(--accent-color); border-color: var(--accent-color); box-shadow: 0 4px 10px rgba(0, 123, 255, 0.15); font-weight: 700; }
     .option-icon { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; margin-right: 12px; }
     .option-text { flex: 1; text-align: center; line-height: 1.2; }
-    .conditional-field { max-height: 0; overflow: hidden; opacity: 0; transition: all 0.3s ease-out; margin-bottom: 0; }
+	 
+	 /* FIX PULSANTI ACCOUNT MICROSOFT (Ripristino classi colore) */
+     #btnAuth { margin-bottom: 15px; }
+     .action-card svg { width: 32px; height: 32px; flex-shrink: 0; margin-right: 15px; fill: currentColor; }
+     .action-card.is-disabled { background: var(--disabled-bg); color: var(--text-muted); cursor: not-allowed; border-color: transparent; box-shadow: none; }
+     .action-card.is-primary { background: #ffffff; color: var(--accent-color); border-color: var(--accent-color); box-shadow: 0 4px 10px rgba(0, 123, 255, 0.15); font-weight: 700; }
+     .action-card.is-import { background: #ffffff; color: var(--import-color); border-color: var(--import-color); box-shadow: 0 4px 10px rgba(23, 162, 184, 0.15); font-weight: 700; }
+     .action-card.is-success { background: #ffffff; color: var(--success-color); border-color: var(--success-color); box-shadow: 0 4px 10px rgba(40, 167, 69, 0.15); font-weight: 700; }
+    
+	.conditional-field { max-height: 0; overflow: hidden; opacity: 0; transition: all 0.3s ease-out; margin-bottom: 0; }
     .conditional-field.visible { max-height: 150px; opacity: 1; margin-bottom: 15px; margin-top: 5px; overflow: visible; }
     .submit-container { padding: 30px 0; background: transparent; text-align: center; display: flex; flex-direction: column; gap: 15px; align-items: center; width: 100%; }
     .final-action-card { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; width: 100%; max-width: 400px; padding: 18px 20px; font-size: 20px; font-weight: bold; border: none; border-radius: var(--border-radius); cursor: pointer; transition: all 0.3s; outline: none; min-height: 70px; }
@@ -186,16 +195,20 @@
 
         <div class="form-group">
             <div class="section-title" id="lbl-ms-title">Account Microsoft *</div>
+            
             <button type="button" id="btn-create-ms" class="action-card is-primary">
                 <svg viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                 <span class="action-text" id="lbl-btn-create-ms">Crea nuovo account Microsoft</span>
             </button>
+            
             <button type="button" id="btnAuth" class="action-card is-disabled" onclick="handleImportClick()" disabled>
                 <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
                 <span class="action-text" id="lbl-btn-auth">Importa account creato</span>
             </button>
+            
             <label class="form-label" id="lbl-ms-username">Email</label>
             <input type="text" id="ms-username" class="standard-input" placeholder="nome.cognome@dominio" style="margin-bottom: 15px; text-transform: lowercase;">
+
             <label class="form-label" id="lbl-ms-password">Password</label>
             <input type="text" id="ms-password" class="standard-input" style="text-transform: none;">
         </div>
