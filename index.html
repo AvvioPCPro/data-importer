@@ -734,18 +734,18 @@
     
     function closeOperatorModal() { elements.operatorModal.classList.remove('active'); }
 
-    async function saveOperatorSelection() {
+        async function saveOperatorSelection() {
         const storeId = elements.storeDropdown.value;
         const opId = elements.operatorDropdown.value;
-        const pin = elements.operatorPin.value.replace(/\D/g, ''); // Rimuove spazi o caratteri invisibili
+        const pin = elements.operatorPin.value.replace(/\D/g, ''); 
         
         if (storeId === "000" || opId === "00000") {
-            showAlert("Seleziona prima un negozio e un operatore.");
+            alert("Seleziona prima un negozio e un operatore.");
             return;
         }
         
         if (pin.length !== 4) { 
-            showAlert(DICTIONARY.alertPinLength); 
+            alert(DICTIONARY.alertPinLength); 
             return; 
         }
         
@@ -767,14 +767,13 @@
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' }
             });
             
-            // Leggiamo la risposta come testo. Se non è JSON, ci mostra l'errore esatto.
             const textResponse = await res.text(); 
             let data;
             
             try {
                 data = JSON.parse(textResponse);
             } catch (parseError) {
-                throw new Error("Il server ha risposto con un formato inatteso: " + textResponse.substring(0, 100) + "...");
+                throw new Error("Il server ha risposto con un formato inatteso (HTML). Controlla che Code.gs sia pubblicato come Web App e accessibile a tutti.");
             }
             
             if (data.status === "success" && data.token) {
@@ -797,13 +796,13 @@
                 updateOperatorUI(); 
                 closeOperatorModal();
             } else { 
-                // Errore restituito dal server (es. PIN errato o API Key errata)
-                showAlert(data.message || DICTIONARY.alertPinInvalid); 
+                // Mostriamo l'errore del server con l'alert nativo
+                alert("Errore login: " + (data.message || "PIN non valido.")); 
                 elements.operatorPin.value = ''; 
             }
         } catch (e) { 
-            // Errore di rete o di parsing
-            showAlert("Errore durante l'autenticazione: " + e.message); 
+            // Mostriamo gli errori di rete con l'alert nativo
+            alert("Errore durante l'autenticazione: " + e.message); 
         } finally {
             btnSave.innerText = originalText;
             btnSave.disabled = false;
