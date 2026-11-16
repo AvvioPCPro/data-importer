@@ -43,6 +43,11 @@
     .camera-btn svg { width: 26px; height: 26px; fill: var(--header-bg); }
     .segmented-control, .toggle-control { display: flex; flex-direction: column; background: transparent; padding: 0; margin-bottom: 5px; }
     .radio-card, .toggle-card, .action-card { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; background: var(--disabled-bg); border: 2px solid transparent; padding: 10px 15px; font-size: 16px; font-weight: 500; color: var(--text-muted); cursor: pointer; border-radius: var(--border-radius); transition: all 0.2s; min-height: 60px; margin-bottom: 4px; }
+    
+    /* FIX ICONE ENORMI */
+    .action-card svg { width: 30px !important; height: 30px !important; min-width: 30px !important; max-width: 30px !important; flex-shrink: 0; margin-right: 15px; fill: currentColor; }
+    .action-card { min-height: 60px; padding: 10px 15px; font-size: 16px; }
+    
     .segmented-control input[type="radio"], .toggle-control input[type="checkbox"] { display: none; }
     .segmented-control input[type="radio"]:checked + .radio-card, .toggle-control input[type="checkbox"]:checked + .toggle-card { background: #ffffff; color: var(--accent-color); border-color: var(--accent-color); box-shadow: 0 4px 10px rgba(0, 123, 255, 0.15); font-weight: 700; }
     .option-icon { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; margin-right: 12px; }
@@ -84,8 +89,6 @@
     .spinner { width: 70px; height: 70px; border: 6px solid var(--disabled-bg); border-top-color: var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
     .loading-text { font-size: 22px; font-weight: 600; color: var(--header-bg); text-align: center; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    
-    /* Esclusione temporanea per i campi disabilitati (Lock record) */
     input:disabled, select:disabled { background-color: #f8f9fa !important; color: #6c757d !important; cursor: not-allowed; }
 </style>
 </head>
@@ -112,7 +115,6 @@
             </div>
         </div>
 
-        <!-- Banner Record Esistente -->
         <div id="existing-record-banner" style="display: none; background-color: #fff3cd; border: 2px solid #ffecb5; border-radius: 8px; padding: 15px; text-align: center;">
             <div style="color: #856404; font-weight: bold; font-size: 18px; margin-bottom: 5px;">⚠️ SERIALE GIÀ REGISTRATO</div>
             <div style="color: #856404; font-size: 14px; margin-bottom: 15px;" id="existing-record-details"></div>
@@ -220,7 +222,6 @@
         </div>
     </main>
 
-    <!-- Modali -->
     <div id="custom-alert-modal" class="fullscreen-modal">
         <div class="operator-dialog" style="text-align: center;">
             <div class="alert-title">Avviso</div>
@@ -456,7 +457,19 @@
         existingRecordDetails: document.getElementById('existing-record-details')
     };
 
-    // --- INIZIALIZZAZIONE ---
+    function handleAuthError(msg) {
+        if (msg.includes("Unauthorized session") || msg.includes("Unauthorized")) {
+            localStorage.removeItem('avviopc_session_token');
+            sessionToken = "";
+            currentOperatorId = "00000";
+            localStorage.removeItem('operator_id');
+            updateOperatorUI();
+            showAlert("La tua sessione è scaduta per motivi di sicurezza.<br><br>Clicca sul tuo ID Operatore in alto a destra, seleziona il tuo nome, inserisci il PIN e premi Conferma.");
+            return true;
+        }
+        return false;
+    }
+
     window.addEventListener('load', () => {
         initializeUIStrings();
         updateOperatorUI();
@@ -506,18 +519,13 @@
         validateForm();
     }
 
-    // --- DRAFT AUTOSAVE ---
     function saveDraft() {
         if (elements.existingRecordBanner && elements.existingRecordBanner.style.display === 'block') return;
         const draft = {
-            pcSerial: elements.pcSerial.value,
-            localAccount: elements.localAccount.value,
-            officeType: document.querySelector('input[name="office_type"]:checked')?.value,
-            officeKey: elements.officeKey.value,
-            avType: document.querySelector('input[name="av_type"]:checked')?.value,
-            avKey: elements.avKey.value,
-            runCyber: elements.runCyber.checked,
-            runUpdates: elements.runUpdates.checked
+            pcSerial: elements.pcSerial.value, localAccount: elements.localAccount.value,
+            officeType: document.querySelector('input[name="office_type"]:checked')?.value, officeKey: elements.officeKey.value,
+            avType: document.querySelector('input[name="av_type"]:checked')?.value, avKey: elements.avKey.value,
+            runCyber: elements.runCyber.checked, runUpdates: elements.runUpdates.checked
         };
         localStorage.setItem('avviopc_draft', JSON.stringify(draft));
     }
@@ -529,15 +537,9 @@
                 const draft = JSON.parse(saved);
                 if (draft.pcSerial) elements.pcSerial.value = draft.pcSerial;
                 if (draft.localAccount) elements.localAccount.value = draft.localAccount;
-                if (draft.officeType) {
-                    const ot = document.querySelector(`input[name="office_type"][value="${draft.officeType}"]`);
-                    if (ot) ot.checked = true;
-                }
+                if (draft.officeType) { const ot = document.querySelector(`input[name="office_type"][value="${draft.officeType}"]`); if (ot) ot.checked = true; }
                 if (draft.officeKey) elements.officeKey.value = draft.officeKey;
-                if (draft.avType) {
-                    const av = document.querySelector(`input[name="av_type"][value="${draft.avType}"]`);
-                    if (av) av.checked = true;
-                }
+                if (draft.avType) { const av = document.querySelector(`input[name="av_type"][value="${draft.avType}"]`); if (av) av.checked = true; }
                 if (draft.avKey) elements.avKey.value = draft.avKey;
                 if (draft.runCyber !== undefined) elements.runCyber.checked = draft.runCyber;
                 if (draft.runUpdates !== undefined) elements.runUpdates.checked = draft.runUpdates;
@@ -546,7 +548,6 @@
         }
     }
 
-    // --- CUSTOM ALERT (Fix XSS) ---
     function showAlert(msg, callback = null) {
         const safeMsg = String(msg).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
         elements.alertMessage.innerHTML = safeMsg;
@@ -556,38 +557,28 @@
 
     function closeCustomAlert() {
         elements.customAlertModal.classList.remove('active');
-        if (customAlertCallback) {
-            customAlertCallback();
-            customAlertCallback = null;
-        }
+        if (customAlertCallback) { customAlertCallback(); customAlertCallback = null; }
     }
 
-    // --- LOGICA FORM ---
     function handleSerialInput() {
         validateForm(); 
         const currentSerial = elements.pcSerial.value.trim().toUpperCase();
         elements.pcSerial.value = currentSerial;
-
         elements.reprintBtn.style.background = "";
         elements.reprintBtn.classList.remove('is-success');
-
         if (currentSerial.length < 5) { unlockForm(); return; }
-
         clearTimeout(serialCheckTimeout);
         serialCheckTimeout = setTimeout(async () => {
             try {
                 const safeUrl = `${GOOGLE_SCRIPT_URL}?action=check_serial&serial=${encodeURIComponent(currentSerial)}&api_key=${APP_API_KEY}&t=${new Date().getTime()}`;
                 const response = await fetch(safeUrl);
                 const result = await response.json();
-
                 if (result.status === "success") {
                     if (result.exists && result.record) {
                         elements.reprintBtn.classList.add('is-success');
                         if ("vibrate" in navigator) navigator.vibrate([50]);
                         lockFormAndPopulate(result.record);
-                    } else {
-                        unlockForm();
-                    }
+                    } else { unlockForm(); }
                 }
             } catch (err) { console.log("WARN: Serial check failed."); }
         }, 800); 
@@ -597,30 +588,19 @@
         const dateStr = record.timestamp ? new Date(record.timestamp).toLocaleDateString('it-IT') : "N/D";
         elements.existingRecordBanner.style.display = 'block';
         elements.existingRecordDetails.innerHTML = `Registrato il <b>${dateStr}</b> dall'operatore <b>${record.operator_id.replace(/</g, "&lt;")}</b> (Negozio: ${record.store_id.replace(/</g, "&lt;")}).<br>Impossibile sovrascrivere i dati. Eliminare il record per procedere.`;
-        
         try {
             elements.localAccount.value = record.local_account || "";
-            if (record.office_suite === 'ms_office') {
-                elements.officeMs.checked = true;
-                elements.officeKey.value = record.office_key || "";
-            } else {
-                document.querySelector('input[name="office_type"][value="libre_office"]').checked = true;
-            }
+            if (record.office_suite === 'ms_office') { elements.officeMs.checked = true; elements.officeKey.value = record.office_key || ""; } 
+            else { document.querySelector('input[name="office_type"][value="libre_office"]').checked = true; }
             const avType = (record.antivirus || "none").toLowerCase();
             const avRadio = document.querySelector(`input[name="av_type"][value="${avType}"]`);
-            if (avRadio) {
-                avRadio.checked = true;
-                elements.avKey.value = record.antivirus_key || "";
-            } else {
-                elements.avNone.checked = true;
-            }
+            if (avRadio) { avRadio.checked = true; elements.avKey.value = record.antivirus_key || ""; } 
+            else { elements.avNone.checked = true; }
             elements.runCyber.checked = (record.cyber === "Yes");
             elements.runUpdates.checked = (record.windows_update === "Yes");
             elements.msUsername.value = record.microsoft_account || "";
             elements.msPassword.value = record.microsoft_password || "";
-
             toggleFields(); 
-            
             const inputs = document.querySelectorAll('main.form-container input, main.form-container select');
             inputs.forEach(el => el.disabled = true);
             elements.reprintBtn.disabled = false;
@@ -637,24 +617,14 @@
     }
 
     function toggleFields() {
-        if (elements.officeMs.checked) {
-            document.getElementById('lbl-opt-ms').after(elements.msOfficeField);
-        }
+        if (elements.officeMs.checked) { document.getElementById('lbl-opt-ms').after(elements.msOfficeField); }
         elements.msOfficeField.classList.toggle('visible', elements.officeMs.checked);
-        
         const showAvKey = elements.avNorton.checked || elements.avMcafee.checked;
-        if (elements.avNorton.checked) {
-            document.getElementById('lbl-opt-norton').after(elements.avField);
-        } else if (elements.avMcafee.checked) {
-            document.getElementById('lbl-opt-mcafee').after(elements.avField);
-        }
+        if (elements.avNorton.checked) { document.getElementById('lbl-opt-norton').after(elements.avField); } 
+        else if (elements.avMcafee.checked) { document.getElementById('lbl-opt-mcafee').after(elements.avField); }
         
-        // Cyber Protection Logic
-        if (elements.avUnevdi.checked) {
-            elements.runCyber.checked = true;
-        } else {
-            elements.runCyber.checked = false;
-        }
+        if (elements.avUnevdi.checked) { elements.runCyber.checked = true; } 
+        else { elements.runCyber.checked = false; }
         elements.runCyber.dispatchEvent(new Event('change'));
         
         if (showAvKey) {
@@ -676,11 +646,8 @@
     }
 
     function validateForm() {
-        if (isFormValidCheck()) {
-            elements.submitBtn.classList.remove('is-disabled');
-        } else {
-            elements.submitBtn.classList.add('is-disabled');
-        }
+        if (isFormValidCheck()) { elements.submitBtn.classList.remove('is-disabled'); } 
+        else { elements.submitBtn.classList.add('is-disabled'); }
         saveDraft(); 
     }
 
@@ -696,9 +663,7 @@
         if (originalValue === formattedValue) return;
         input.value = formattedValue;
         let alnumCountBeforeCursor = 0;
-        for (let i = 0; i < start && i < originalValue.length; i++) {
-            if (/[A-Za-z0-9]/.test(originalValue[i])) alnumCountBeforeCursor++;
-        }
+        for (let i = 0; i < start && i < originalValue.length; i++) { if (/[A-Za-z0-9]/.test(originalValue[i])) alnumCountBeforeCursor++; }
         let newCursorPos = 0;
         let currentAlnumCount = 0;
         for (let i = 0; i < formattedValue.length; i++) {
@@ -710,34 +675,22 @@
         validateForm();
     }
 
-    function formatAvKey(input) {
-        formatProductKey(input, elements.avNorton.checked ? ' ' : '-');
-    }
-
+    function formatAvKey(input) { formatProductKey(input, elements.avNorton.checked ? ' ' : '-'); }
     function formatLocalAccount(input) {
-        let val = input.value;
-        let words = val.split(' ');
-        for (let i = 0; i < words.length; i++) {
-            if (words[i].length > 0) words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1).toLowerCase();
-        }
-        input.value = words.join(' ');
-        validateForm();
+        let val = input.value; let words = val.split(' ');
+        for (let i = 0; i < words.length; i++) { if (words[i].length > 0) words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1).toLowerCase(); }
+        input.value = words.join(' '); validateForm();
     }
 
-    // --- OPERATOR & AUTH ---
     async function fetchOperatorsFromServer() {
         try {
             elements.storeDropdown.innerHTML = `<option value="000">${DICTIONARY.opModalLoading}</option>`;
             const safeUrl = `${GOOGLE_SCRIPT_URL}?action=get_operators&api_key=${APP_API_KEY}&t=${new Date().getTime()}`;
             const response = await fetch(safeUrl);
             const result = await response.json();
-            if (result.status === "success") {
-                OPERATOR_DB = result.data;
-                initializeStoreDropdown();
-            } else { throw new Error("Server error"); }
-        } catch (err) {
-            elements.storeDropdown.innerHTML = `<option value="000">Network Error</option>`;
-        }
+            if (result.status === "success") { OPERATOR_DB = result.data; initializeStoreDropdown(); } 
+            else { throw new Error("Server error"); }
+        } catch (err) { elements.storeDropdown.innerHTML = `<option value="000">Network Error</option>`; }
     }
 
     function initializeStoreDropdown() {
@@ -745,22 +698,13 @@
         uniqueStores.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
         elements.storeDropdown.innerHTML = `<option value="000">${DICTIONARY.storeModalDefault}</option>`;
         uniqueStores.forEach(store => {
-            if(store) {
-                const opt = document.createElement('option');
-                opt.value = store; 
-                opt.textContent = `Negozio ${store}`;
-                elements.storeDropdown.appendChild(opt);
-            }
+            if(store) { const opt = document.createElement('option'); opt.value = store; opt.textContent = `Negozio ${store}`; elements.storeDropdown.appendChild(opt); }
         });
         const savedStoreId = localStorage.getItem('store_id');
         if (savedStoreId && uniqueStores.includes(savedStoreId)) {
-            elements.storeDropdown.value = savedStoreId;
-            onStoreSelectionChange(); 
+            elements.storeDropdown.value = savedStoreId; onStoreSelectionChange(); 
             const savedOpId = localStorage.getItem('operator_id');
-            if (savedOpId && OPERATOR_DB.find(o => String(o.id) === String(savedOpId))) {
-                elements.operatorDropdown.value = savedOpId;
-                currentOperatorId = savedOpId;
-            }
+            if (savedOpId && OPERATOR_DB.find(o => String(o.id) === String(savedOpId))) { elements.operatorDropdown.value = savedOpId; currentOperatorId = savedOpId; }
         }
     }
 
@@ -775,10 +719,7 @@
         storeOperators.forEach(op => {
             const nameStr = `${op.lastName} ${op.firstName}`;
             const padding = '\xa0'.repeat(maxLength - nameStr.length + 1);
-            const opt = document.createElement('option');
-            opt.value = op.id; 
-            opt.textContent = `${nameStr}${padding}[${op.id}]`;
-            elements.operatorDropdown.appendChild(opt);
+            const opt = document.createElement('option'); opt.value = op.id; opt.textContent = `${nameStr}${padding}[${op.id}]`; elements.operatorDropdown.appendChild(opt);
         });
         elements.operatorDropdown.disabled = false;
     }
@@ -796,66 +737,90 @@
     async function saveOperatorSelection() {
         const storeId = elements.storeDropdown.value;
         const opId = elements.operatorDropdown.value;
+        const pin = elements.operatorPin.value.replace(/\D/g, ''); // Rimuove spazi o caratteri invisibili
         
-        // FIX: Pulisce il PIN da spazi o caratteri non numerici
-        const pin = elements.operatorPin.value.replace(/\D/g, '');
+        if (storeId === "000" || opId === "00000") {
+            showAlert("Seleziona prima un negozio e un operatore.");
+            return;
+        }
         
-        if (storeId === "000" || opId === "00000") return;
-        if (pin.length !== 4) { showAlert(DICTIONARY.alertPinLength); return; }
+        if (pin.length !== 4) { 
+            showAlert(DICTIONARY.alertPinLength); 
+            return; 
+        }
         
+        // Feedback visivo sul pulsante
+        const btnSave = document.getElementById('btn-save');
+        const originalText = btnSave.innerText;
+        btnSave.innerText = "Verifica...";
+        btnSave.disabled = true;
+
         try {
             const res = await fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
+                method: 'POST', 
                 body: JSON.stringify({ 
                     action: "login", 
                     operator_id: opId, 
-                    pin: pin,
-                    api_key: APP_API_KEY
+                    pin: pin, 
+                    api_key: APP_API_KEY 
                 }),
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' }
             });
-            const data = await res.json();
+            
+            // Leggiamo la risposta come testo. Se non è JSON, ci mostra l'errore esatto.
+            const textResponse = await res.text(); 
+            let data;
+            
+            try {
+                data = JSON.parse(textResponse);
+            } catch (parseError) {
+                throw new Error("Il server ha risposto con un formato inatteso: " + textResponse.substring(0, 100) + "...");
+            }
             
             if (data.status === "success" && data.token) {
                 sessionToken = data.token;
                 localStorage.setItem('avviopc_session_token', sessionToken);
-                if (elements.chkEnableAlerts.checked) {
-                    localStorage.removeItem('hide_pwd_alert'); localStorage.removeItem('hide_import_alert');
-                } else {
-                    localStorage.setItem('hide_pwd_alert', 'true'); localStorage.setItem('hide_import_alert', 'true');
+                
+                if (elements.chkEnableAlerts.checked) { 
+                    localStorage.removeItem('hide_pwd_alert'); 
+                    localStorage.removeItem('hide_import_alert'); 
+                } else { 
+                    localStorage.setItem('hide_pwd_alert', 'true'); 
+                    localStorage.setItem('hide_import_alert', 'true'); 
                 }
-                currentOperatorId = opId;
-                localStorage.setItem('operator_id', opId);
+                
+                currentOperatorId = opId; 
+                localStorage.setItem('operator_id', opId); 
                 localStorage.setItem('store_id', storeId); 
                 elements.operatorPin.value = ''; 
-                updateOperatorUI();
+                
+                updateOperatorUI(); 
                 closeOperatorModal();
-            } else {
+            } else { 
+                // Errore restituito dal server (es. PIN errato o API Key errata)
                 showAlert(data.message || DICTIONARY.alertPinInvalid); 
-                elements.operatorPin.value = '';
+                elements.operatorPin.value = ''; 
             }
-        } catch (e) {
-            showAlert("Errore di rete durante l'autenticazione.");
+        } catch (e) { 
+            // Errore di rete o di parsing
+            showAlert("Errore durante l'autenticazione: " + e.message); 
+        } finally {
+            btnSave.innerText = originalText;
+            btnSave.disabled = false;
         }
     }
 
     function updateOperatorUI() { elements.operatorBadge.innerText = currentOperatorId; validateForm(); }
 
-    // --- MICROSOFT OAUTH ---
     function updateAuthButtonVisuals() {
         elements.btnAuth.classList.remove('is-disabled', 'is-import', 'is-success');
-        if (!isMsCreated) {
-            elements.btnAuth.disabled = true; elements.btnAuth.classList.add('is-disabled');
-        } else if (!acquiredEmail) {
-            elements.btnAuth.disabled = false; elements.btnAuth.classList.add('is-import');
-        } else {
+        if (!isMsCreated) { elements.btnAuth.disabled = true; elements.btnAuth.classList.add('is-disabled'); } 
+        else if (!acquiredEmail) { elements.btnAuth.disabled = false; elements.btnAuth.classList.add('is-import'); } 
+        else {
             const currentEmail = elements.msUsername.value.trim().toLowerCase();
             const currentPwd = elements.msPassword.value.trim();
-            if (currentEmail === acquiredEmail.toLowerCase() && currentPwd === acquiredPassword) {
-                elements.btnAuth.classList.add('is-success');
-            } else {
-                elements.btnAuth.classList.add('is-disabled');
-            }
+            if (currentEmail === acquiredEmail.toLowerCase() && currentPwd === acquiredPassword) { elements.btnAuth.classList.add('is-success'); } 
+            else { elements.btnAuth.classList.add('is-disabled'); }
         }
     }
 
@@ -872,8 +837,7 @@
 
     elements.btnPwdAlertOk.onclick = () => {
         if (elements.chkDontShowAgain.checked) { localStorage.setItem('hide_pwd_alert', 'true'); }
-        elements.pwdAlertModal.classList.remove('active');
-        executeMsCreationFlow();
+        elements.pwdAlertModal.classList.remove('active'); executeMsCreationFlow();
     };
 
     function executeMsCreationFlow() {
@@ -895,8 +859,7 @@
 
     elements.btnImportAlertOk.onclick = () => {
         if (elements.chkImportDontShowAgain.checked) { localStorage.setItem('hide_import_alert', 'true'); }
-        elements.importAlertModal.classList.remove('active');
-        startMicrosoftAuth();
+        elements.importAlertModal.classList.remove('active'); startMicrosoftAuth();
     };
 
     async function startMicrosoftAuth() {
@@ -904,15 +867,12 @@
         elements.btnAuth.disabled = true;
         try {
             const uuidRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=get_uuid&api_key=${APP_API_KEY}`);
-            const uuidData = await uuidRes.json();
-            currentAuthSession = uuidData.uuid;
+            const uuidData = await uuidRes.json(); currentAuthSession = uuidData.uuid;
             const popup = window.open('', '_blank');
             const response = await fetch(GOOGLE_SCRIPT_URL + "?action=getAuthUrl&session_id=" + currentAuthSession);
             const data = await response.json();
             if (!data.url) { popup.close(); showAlert("CRITICAL: Backend returned empty URL."); document.getElementById('lbl-btn-auth').innerText = DICTIONARY.btnAuth; elements.btnAuth.disabled = false; return; }
-            popup.location.href = data.url;
-            document.getElementById('lbl-btn-auth').innerText = "In attesa...";
-            pollForEmail();
+            popup.location.href = data.url; document.getElementById('lbl-btn-auth').innerText = "In attesa..."; pollForEmail();
         } catch (error) { showAlert(DICTIONARY.alertOauthConnectionError); document.getElementById('lbl-btn-auth').innerText = DICTIONARY.btnAuth; elements.btnAuth.disabled = false; }
     }
 
@@ -924,21 +884,15 @@
                 const response = await fetch(GOOGLE_SCRIPT_URL + "?action=getEmail&session_id=" + currentAuthSession);
                 const data = await response.json();
                 if (data.email) {
-                    clearInterval(pollingInterval);
-                    acquiredEmail = data.email;
-                    acquiredPassword = elements.msPassword.value.trim();
-                    elements.msUsername.value = data.email;
-                    document.getElementById('lbl-btn-auth').innerText = "Account importato";
-                    updateAuthButtonVisuals();
-                    showAlert(DICTIONARY.alertOauthSuccess + data.email);
-                    validateForm();
+                    clearInterval(pollingInterval); acquiredEmail = data.email; acquiredPassword = elements.msPassword.value.trim();
+                    elements.msUsername.value = data.email; document.getElementById('lbl-btn-auth').innerText = "Account importato";
+                    updateAuthButtonVisuals(); showAlert(DICTIONARY.alertOauthSuccess + data.email); validateForm();
                 }
             } catch (e) {}
             if (attempts > 40) { clearInterval(pollingInterval); document.getElementById('lbl-btn-auth').innerText = "Timeout. Riprova."; elements.btnAuth.disabled = false; updateAuthButtonVisuals(); }
         }, 3000);
     }
 
-    // --- SCANNER / OCR ---
     async function openScanner(targetId, mode) {
         currentInputId = targetId; currentMode = mode;
         if (mode === 'barcode') { document.getElementById('scanner-title').innerText = DICTIONARY.scanTitleBarcode; } 
@@ -959,8 +913,7 @@
 
     function closeScanner() {
         currentMode = null; elements.scannerModal.classList.remove('active');
-        if (streamTrack) streamTrack.stop();
-        elements.video.srcObject = null;
+        if (streamTrack) streamTrack.stop(); elements.video.srcObject = null;
         if (barcodeInterval) { clearInterval(barcodeInterval); barcodeInterval = null; }
     }
 
@@ -968,33 +921,19 @@
         const ctx = elements.canvas.getContext('2d', { willReadFrequently: true });
         barcodeInterval = setInterval(async () => {
             if (currentMode !== 'barcode' || !elements.video.videoWidth) return;
-            const v = elements.video;
-            const overlay = elements.overlay.getBoundingClientRect();
-            const wrapper = v.parentElement.getBoundingClientRect();
+            const v = elements.video; const overlay = elements.overlay.getBoundingClientRect(); const wrapper = v.parentElement.getBoundingClientRect();
             const scaleX = v.videoWidth / wrapper.width; const scaleY = v.videoHeight / wrapper.height;
-            const cw = overlay.width * scaleX; const ch = overlay.height * scaleY;
-            const cx = (overlay.left - wrapper.left) * scaleX; const cy = (overlay.top - wrapper.top) * scaleY;
-            elements.canvas.width = cw; elements.canvas.height = ch;
-            ctx.drawImage(v, cx, cy, cw, ch, 0, 0, cw, ch);
+            const cw = overlay.width * scaleX; const ch = overlay.height * scaleY; const cx = (overlay.left - wrapper.left) * scaleX; const cy = (overlay.top - wrapper.top) * scaleY;
+            elements.canvas.width = cw; elements.canvas.height = ch; ctx.drawImage(v, cx, cy, cw, ch, 0, 0, cw, ch);
             try {
                 let detectedValue = null;
-                if (nativeBarcodeDetector) {
-                    const barcodes = await nativeBarcodeDetector.detect(elements.canvas);
-                    if (barcodes.length > 0) detectedValue = barcodes[0].rawValue;
-                }
+                if (nativeBarcodeDetector) { const barcodes = await nativeBarcodeDetector.detect(elements.canvas); if (barcodes.length > 0) detectedValue = barcodes[0].rawValue; }
                 if (!detectedValue) {
-                    const imgUrl = elements.canvas.toDataURL("image/jpeg", 0.6);
-                    const img = new Image(); img.src = imgUrl;
-                    await new Promise((resolve) => {
-                        img.onload = async () => {
-                            try { const result = await zxingReader.decodeFromImageElement(img); detectedValue = result.text; } catch(e) {}
-                            resolve();
-                        };
-                    });
+                    const imgUrl = elements.canvas.toDataURL("image/jpeg", 0.6); const img = new Image(); img.src = imgUrl;
+                    await new Promise((resolve) => { img.onload = async () => { try { const result = await zxingReader.decodeFromImageElement(img); detectedValue = result.text; } catch(e) {} resolve(); }; });
                 }
                 if (detectedValue) {
-                    clearInterval(barcodeInterval); barcodeInterval = null;
-                    document.getElementById(currentInputId).value = detectedValue;
+                    clearInterval(barcodeInterval); barcodeInterval = null; document.getElementById(currentInputId).value = detectedValue;
                     if ("vibrate" in navigator) navigator.vibrate([100, 50, 100]);
                     closeScanner(); validateForm();
                 }
@@ -1005,55 +944,38 @@
     elements.captureBtn.onclick = async () => {
         if (!streamTrack || currentMode !== 'ocr') return;
         elements.video.pause(); elements.captureBtn.disabled = true; elements.modalStatus.innerText = "Transmitting image to Cloud API..."; 
-        const ctx = elements.canvas.getContext('2d', { willReadFrequently: true });
-        const v = elements.video;
-        const overlay = elements.overlay.getBoundingClientRect();
-        const wrapper = v.parentElement.getBoundingClientRect();
+        const ctx = elements.canvas.getContext('2d', { willReadFrequently: true }); const v = elements.video;
+        const overlay = elements.overlay.getBoundingClientRect(); const wrapper = v.parentElement.getBoundingClientRect();
         const scaleX = v.videoWidth / wrapper.width; const scaleY = v.videoHeight / wrapper.height;
-        const cropReduction = 12; 
-        const cw = overlay.width * scaleX; const ch = (overlay.height - (cropReduction * 2)) * scaleY;
+        const cropReduction = 12; const cw = overlay.width * scaleX; const ch = (overlay.height - (cropReduction * 2)) * scaleY;
         const cx = (overlay.left - wrapper.left) * scaleX; const cy = ((overlay.top + cropReduction) - wrapper.top) * scaleY;
-        elements.canvas.width = cw; elements.canvas.height = ch;
-        ctx.drawImage(v, cx, cy, cw, ch, 0, 0, cw, ch);
+        elements.canvas.width = cw; elements.canvas.height = ch; ctx.drawImage(v, cx, cy, cw, ch, 0, 0, cw, ch);
         const base64Image = elements.canvas.toDataURL("image/jpeg", 0.9).split(',')[1];
 
         try {
             const payload = { action: "ocr", image_data: base64Image, api_key: APP_API_KEY };
             const res = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
             const data = await res.json();
-            if (data.status === "error") {
-                if (data.reason === "quota_exceeded" && currentOcrRemaining !== null) { currentOcrRemaining = 0; updateScannerTitleWithQuota(0); }
-                throw new Error(data.message);
-            }
+            if (data.status === "error") { if (data.reason === "quota_exceeded" && currentOcrRemaining !== null) { currentOcrRemaining = 0; updateScannerTitleWithQuota(0); } throw new Error(data.message); }
             if (currentOcrRemaining !== null && currentOcrRemaining > 0) { currentOcrRemaining--; updateScannerTitleWithQuota(currentOcrRemaining); }
 
             let rawText = data.text.toUpperCase();
-            const dashCount = (rawText.match(/-/g) || []).length;
-            const spaceCount = (rawText.match(/ /g) || []).length;
+            const dashCount = (rawText.match(/-/g) || []).length; const spaceCount = (rawText.match(/ /g) || []).length;
 
             if (currentInputId === 'office-key') {
                 if (dashCount === 0 && spaceCount >= 3) { elements.modalStatus.innerText = DICTIONARY.ocrFormatOfficeExpected; elements.captureBtn.disabled = false; elements.video.play(); return; }
                 const base24Corrections = { 'S': '6', '5': '6', 'O': 'Q', '0': 'Q', 'I': 'T', '1': 'T', 'L': 'T', 'A': '4', 'U': 'V', 'E': 'F', 'N': 'M', 'Z': '2' };
-                rawText = rawText.split('').map(char => base24Corrections[char] || char).join('');
-                rawText = rawText.replace(/[^BCDFGHJKMPQRTVWXY2346789Z\- ]/g, '');
-            } else if (currentInputId === 'av-key' && elements.avNorton.checked) {
-                if (dashCount >= 2) { elements.modalStatus.innerText = DICTIONARY.ocrFormatNortonExpected; elements.captureBtn.disabled = false; elements.video.play(); return; }
-            }
+                rawText = rawText.split('').map(char => base24Corrections[char] || char).join(''); rawText = rawText.replace(/[^BCDFGHJKMPQRTVWXY2346789Z\- ]/g, '');
+            } else if (currentInputId === 'av-key' && elements.avNorton.checked) { if (dashCount >= 2) { elements.modalStatus.innerText = DICTIONARY.ocrFormatNortonExpected; elements.captureBtn.disabled = false; elements.video.play(); return; } }
 
             const regex = /([BCDFGHJKMPQRTVWXY2346789Z]{5})[\s-]*([BCDFGHJKMPQRTVWXY2346789Z]{5})[\s-]*([BCDFGHJKMPQRTVWXY2346789Z]{5})[\s-]*([BCDFGHJKMPQRTVWXY2346789Z]{5})[\s-]*([BCDFGHJKMPQRTVWXY2346789Z]{5})/g;
             const matches = [...rawText.matchAll(regex)];
             if (matches && matches.length > 0) {
-                const bestMatch = matches[matches.length - 1];
-                let raw25 = `${bestMatch[1]}${bestMatch[2]}${bestMatch[3]}${bestMatch[4]}${bestMatch[5]}`;
-                let finalArray = raw25.split('');
-                if (currentInputId === 'office-key') {
-                    for (let i = 0; i < 24; i++) { if (finalArray[i] === 'Z') finalArray[i] = '2'; }
-                    finalArray[24] = 'Z';
-                } else { for (let i = 0; i < 25; i++) { if (finalArray[i] === 'Z') finalArray[i] = '2'; } }
-                raw25 = finalArray.join('');
-                const finalKey = `${raw25.substring(0,5)}-${raw25.substring(5,10)}-${raw25.substring(10,15)}-${raw25.substring(15,20)}-${raw25.substring(20,25)}`;
-                const target = document.getElementById(currentInputId);
-                target.value = finalKey; target.dispatchEvent(new Event('input')); elements.modalStatus.innerText = DICTIONARY.statusOcrSuccess;
+                const bestMatch = matches[matches.length - 1]; let raw25 = `${bestMatch[1]}${bestMatch[2]}${bestMatch[3]}${bestMatch[4]}${bestMatch[5]}`; let finalArray = raw25.split('');
+                if (currentInputId === 'office-key') { for (let i = 0; i < 24; i++) { if (finalArray[i] === 'Z') finalArray[i] = '2'; } finalArray[24] = 'Z'; } 
+                else { for (let i = 0; i < 25; i++) { if (finalArray[i] === 'Z') finalArray[i] = '2'; } }
+                raw25 = finalArray.join(''); const finalKey = `${raw25.substring(0,5)}-${raw25.substring(5,10)}-${raw25.substring(10,15)}-${raw25.substring(15,20)}-${raw25.substring(20,25)}`;
+                const target = document.getElementById(currentInputId); target.value = finalKey; target.dispatchEvent(new Event('input')); elements.modalStatus.innerText = DICTIONARY.statusOcrSuccess;
                 setTimeout(closeScanner, 800);
             } else { elements.modalStatus.innerText = DICTIONARY.statusOcrFailed; elements.captureBtn.disabled = false; elements.video.play(); }
         } catch(e) { elements.modalStatus.innerText = e.message; elements.captureBtn.disabled = false; elements.video.play(); }
@@ -1062,57 +984,45 @@
     async function fetchOcrStatus() {
         try {
             const url = `${GOOGLE_SCRIPT_URL}?action=get_ocr_status&api_key=${APP_API_KEY}&t=${new Date().getTime()}`;
-            const res = await fetch(url);
-            const data = await res.json();
+            const res = await fetch(url); const data = await res.json();
             if (data.status === "success") { currentOcrRemaining = data.remaining; updateScannerTitleWithQuota(data.remaining); }
         } catch (e) {}
     }
     function updateScannerTitleWithQuota(remaining) {
-        const titleEl = document.getElementById('scanner-title');
-        let subText, color;
+        const titleEl = document.getElementById('scanner-title'); let subText, color;
         if (remaining === 0) { subText = "nessun riconoscimento disponibile"; color = "#ff6b6b"; } 
         else if (remaining < 50) { subText = `${remaining} riconoscimenti disponibili`; color = "#ffd93d"; } 
         else { subText = `${remaining} riconoscimenti disponibili`; color = "#90ee90"; }
         titleEl.innerHTML = `${DICTIONARY.scanTitleOcr}<br><span style="font-size:13px;font-weight:normal;color:${color};">(${subText})</span>`;
     }
 
-    // --- INVIO DATI ---
     elements.submitBtn.onclick = async () => {
         if (!isFormValidCheck()) { showAlert("Campi obbligatori mancanti."); return; }
         elements.submitBtn.disabled = true; elements.loadingOverlay.classList.add('active');
         
-        // Invio in chiaro: il backend cripterà i dati
         const payload = {
-            action: "new", 
-            operator_id: currentOperatorId, 
-            store_id: localStorage.getItem('store_id') || "UNKNOWN",
-            pc_serial: elements.pcSerial.value.trim(), 
-            local_account: elements.localAccount.value.trim(),
-            office_suite: document.querySelector('input[name="office_type"]:checked').value, 
-            office_key: elements.officeKey.value,
-            antivirus: document.querySelector('input[name="av_type"]:checked').value, 
-            antivirus_key: elements.avKey.value,
-            cyber: elements.runCyber.checked ? "Yes" : "No", 
-            microsoft_account: elements.msUsername.value.trim(),
-            microsoft_password: elements.msPassword.value.trim(),
-            windows_update: elements.runUpdates.checked ? "Yes" : "No", 
-            timestamp: new Date().toISOString(),
-            api_key: APP_API_KEY,
-            token: sessionToken
+            action: "new", operator_id: currentOperatorId, store_id: localStorage.getItem('store_id') || "UNKNOWN",
+            pc_serial: elements.pcSerial.value.trim(), local_account: elements.localAccount.value.trim(),
+            office_suite: document.querySelector('input[name="office_type"]:checked').value, office_key: elements.officeKey.value,
+            antivirus: document.querySelector('input[name="av_type"]:checked').value, antivirus_key: elements.avKey.value,
+            cyber: elements.runCyber.checked ? "Yes" : "No", microsoft_account: elements.msUsername.value.trim(),
+            microsoft_password: elements.msPassword.value.trim(), windows_update: elements.runUpdates.checked ? "Yes" : "No", 
+            timestamp: new Date().toISOString(), api_key: APP_API_KEY, token: sessionToken
         };
         
         try {
             const res = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
             const data = await res.json();
-            if (data.status === "error") throw new Error(data.message);
+            if (data.status === "error") {
+                if (handleAuthError(data.message)) { elements.loadingOverlay.classList.remove('active'); elements.submitBtn.disabled = false; return; }
+                throw new Error(data.message);
+            }
             localStorage.removeItem('avviopc_draft');
             elements.loadingOverlay.classList.remove('active'); 
             showAlert(DICTIONARY.alertUploadSuccess, () => { location.reload(); });
         } catch (e) {
-            elements.loadingOverlay.classList.remove('active'); 
-            showAlert(DICTIONARY.alertUploadError + e.message);
-            elements.submitBtn.disabled = false; 
-            validateForm();
+            elements.loadingOverlay.classList.remove('active'); showAlert(DICTIONARY.alertUploadError + e.message);
+            elements.submitBtn.disabled = false; validateForm();
         }
     };
 
@@ -1120,63 +1030,49 @@
         const sn = elements.pcSerial.value.trim();
         if (!sn) return;
         if (!confirm(`⚠️ ATTENZIONE!\n\nStai per eliminare PERMANENTEMENTE il record di ${sn}.\nProcedere?`)) return;
-
         elements.loadingOverlay.classList.add('active');
         const payload = { action: "delete_record", pc_serial: sn, api_key: APP_API_KEY, token: sessionToken };
-
         try {
             const res = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-            const result = await res.json();
-            elements.loadingOverlay.classList.remove('active');
-            
+            const result = await res.json(); elements.loadingOverlay.classList.remove('active');
             if (result.status === "success") {
                 showAlert("Record eliminato con successo.", () => {
                     elements.localAccount.value = ""; elements.officeKey.value = ""; elements.avKey.value = ""; elements.msUsername.value = "";
                     generateRandomPassword(); elements.existingRecordBanner.style.display = 'none'; unlockForm();
                 });
-            } else { showAlert("Errore: " + result.message); }
-        } catch(e) {
-            elements.loadingOverlay.classList.remove('active'); showAlert("Errore di rete. Impossibile eliminare il record.");
-        }
+            } else { 
+                if (handleAuthError(result.message)) { elements.loadingOverlay.classList.remove('active'); return; }
+                showAlert("Errore: " + result.message); 
+            }
+        } catch(e) { elements.loadingOverlay.classList.remove('active'); showAlert("Errore di rete. Impossibile eliminare il record."); }
     }
 
     async function handleReprint() {
         const sn = elements.pcSerial.value.trim();
         if (!sn) { showAlert("Numero seriale mancante."); return; }
         if (currentOperatorId === "00000" || !sessionToken) { showAlert("Autenticazione operatore richiesta."); return; }
-        
         elements.reprintBtn.disabled = true; elements.loadingOverlay.classList.add('active');
         const payload = { action: "reprint", store_id: localStorage.getItem('store_id'), pc_serial: sn, api_key: APP_API_KEY, token: sessionToken };
         try {
             const res = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-            const result = await res.json();
-            elements.loadingOverlay.classList.remove('active'); 
-            showAlert(result.message || (result.status === "success" ? "Ristampa inviata." : "Errore."));
-        } catch(e) { 
-            elements.loadingOverlay.classList.remove('active'); showAlert("Errore di rete. Richiesta fallita."); 
-        }
+            const result = await res.json(); elements.loadingOverlay.classList.remove('active'); 
+            if (result.status === "success") { showAlert(result.message || "Ristampa inviata."); } 
+            else { if (handleAuthError(result.message)) { elements.reprintBtn.disabled = false; return; } showAlert("Errore."); }
+        } catch(e) { elements.loadingOverlay.classList.remove('active'); showAlert("Errore di rete. Richiesta fallita."); }
         elements.reprintBtn.disabled = false;
     }
 
     function generateRandomPassword() {
-        const uppers = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        const lowers = "abcdefghijklmnopqrstuvwxyz";
-        const numbers = "0123456789";
-        const symbols = "!@#$%^&*";
-        const allChars = uppers + lowers + numbers + symbols;
-        let pwd = "";
-        pwd += uppers[Math.floor(Math.random() * uppers.length)];
-        pwd += lowers[Math.floor(Math.random() * lowers.length)];
-        pwd += numbers[Math.floor(Math.random() * numbers.length)];
-        pwd += symbols[Math.floor(Math.random() * symbols.length)];
+        const uppers = "ABCDEFGHIJKLMNOPQRSTUVWXYZ", lowers = "abcdefghijklmnopqrstuvwxyz", numbers = "0123456789", symbols = "!@#$%^&*";
+        const allChars = uppers + lowers + numbers + symbols; let pwd = "";
+        pwd += uppers[Math.floor(Math.random() * uppers.length)]; pwd += lowers[Math.floor(Math.random() * lowers.length)];
+        pwd += numbers[Math.floor(Math.random() * numbers.length)]; pwd += symbols[Math.floor(Math.random() * symbols.length)];
         for(let i = 0; i < 8; i++) { pwd += allChars[Math.floor(Math.random() * allChars.length)]; }
-        pwd = pwd.split('').sort(() => 0.5 - Math.random()).join('');
-        elements.msPassword.value = pwd;
+        pwd = pwd.split('').sort(() => 0.5 - Math.random()).join(''); elements.msPassword.value = pwd;
         handleManualAccountEdits(); validateForm();
     }
 
     async function initializeOCRWorker() { isOcrReady = true; }
-
 </script>
 </body>
 </html>
