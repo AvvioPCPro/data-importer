@@ -291,8 +291,9 @@ function createBoldNode(value) {
 
 function lockFormAndPopulate(record, isRestricted) {
   isRecordLocked = true;
-  const dateLabel = record.timestamp
-    ? new Date(record.timestamp).toLocaleDateString('it-IT')
+  const recordDate = record.timestamp ? new Date(record.timestamp) : null;
+  const dateLabel = (recordDate && !isNaN(recordDate.getTime()))
+    ? recordDate.toLocaleDateString('it-IT')
     : 'N/D';
 
   // Built with DOM nodes (textContent): server values are never parsed as HTML.
