@@ -591,8 +591,7 @@ function parseRequestBody(e) {
  *   - Microsoft OAuth callback and URL builder
  *   - get_uuid
  *   - get_operators, get_ocr_status          (APP_API_KEY)
- *   - PowerShell provisioning by serial      (POWERSHELL_API_KEY)
- * Sensitive record access is POST-only and requires a session.
+ * Sensitive record access is POST-only: API keys never travel in the URL.
  */
 function doGet(e) {
   try {
@@ -613,12 +612,6 @@ function doGet(e) {
     if (action === 'get_uuid') {
       enforceRateLimit('get_uuid', 120, 60);
       return successResponse({ uuid: Utilities.getUuid() });
-    }
-
-    // PowerShell provisioning route.
-    if (isValidKey(params.api_key, 'POWERSHELL_API_KEY') && params.serial) {
-      enforceRateLimit('provisioning', 120, 60);
-      return successResponse(handleProvisioningRequest(params.serial));
     }
 
     // Web app public data routes.
@@ -643,6 +636,7 @@ function doGet(e) {
  * POST routes:
  *   - login                              (APP_API_KEY + PIN)
  *   - get_print_jobs, confirm_print_jobs (PRINT_DAEMON_KEY)
+ *   - provision_serial                   (POWERSHELL_API_KEY)
  *   - everything else                    (valid session token required)
  * A request without "action" is treated as insert_record (legacy clients).
  */
@@ -663,6 +657,14 @@ function doPost(e) {
     if (action === 'confirm_print_jobs') {
       enforceRateLimit('print_daemon', 120, 60);
       return successResponse(handleConfirmPrintJobs(payload));
+    }
+    if (action === 'provision_serial') {
+      enforceRateLimit('provisioning', 120, 60);
+      if (!isValidKey(payload.api_key, 'POWERSHELL_API_KEY')) {
+        writeAuditLog('powershell', 'provisioning', '-', 'DENIED');
+        throw new AppError(MSG.UNAUTHORIZED);
+      }
+      return successResponse(handleProvisioningRequest(payload.serial));
     }
 
     // Authenticated routes: the identity comes from the server-side session.
