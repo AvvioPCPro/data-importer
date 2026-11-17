@@ -21,7 +21,7 @@
 // 1. CONFIGURATION AND STATE
 // =========================================================================
 
-const APP_API_KEY = 'REPLACE_WITH_NEW_APP_API_KEY';   // from Script Properties
+const APP_API_KEY = '4f259c35d4424d3e835b22012f23ba491e64a9d0b1ee43bbbff8694c543f820f658c627c86b04b3e85f100625af37db4';   // from Script Properties
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwRw29rfoRjM5-_4F-G6YviGQtjFgM18xQ4doFVD23I_DICuzp4OeJLbTBMb2V-t98/exec';
 
 let sessionToken = '';
