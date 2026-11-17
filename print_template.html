@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="it">
+
+  <head>
+    <title>Configurazione PC</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="index,follow">
+    <meta name="generator" content="GrapesJS Studio">
+    
+    <style>
+        /* ==========================================================================
+           1. WEB FONTS EXTERNAL IMPORT
+           ========================================================================== */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap');
+
+        /* ==========================================================================
+           2. PRINT SETUP & PAGE CONFIGURATION
+           ========================================================================== */
+        @page { size: A4 portrait; margin: 0; }
+        @media print {
+            body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .app-row, .app-icon-wrap { background-color: #003366 !important; }
+            .app-row { border-radius: 8px !important; }
+            .app-name, .app-inline-title, .app-desc, .app-inline-desc, .app-extra-label { color: #ffffff !important; }
+            .app-desc, .app-inline-desc { color: #e5e7eb !important; }
+            .no-print { display: none; }
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', -apple-system, sans-serif !important;
+            color: #1a1a1a; line-height: 1.35; margin: 0; padding: 0; background-color: #ffffff;
+        }
+
+        .print-wrap {
+            max-width: 180mm; margin: 0 auto; 
+            padding: 8mm 0; /* Margine di sicurezza ottimale (via di mezzo tra 5mm e 12mm) */
+            box-sizing: border-box; 
+        }
+
+        .mono-font, .app-inline-key-value, .cred-value { font-family: 'IBM Plex Mono', monospace !important; }
+
+        /* ==========================================================================
+           3. HEADER & METADATA
+           ========================================================================== */
+        .main-header { display: flex; justify-content: space-between; padding-bottom: 5px; }
+        .header-logo { height: 44px; }
+        .header-title-group { text-align: right; }
+        .document-title { margin: 0; font-size: 20pt; font-weight: 800; color: #003366; text-transform: uppercase; }
+        .document-subtitle { margin: 0; font-size: 9pt; font-weight: 600; color: #f37021; }
+        
+        .orange-divider { height: 3px; background-color: #f37021; margin: 12px 0; border: none; border-radius: 2px; } /* Aumentato lo spazio attorno ai divisori */
+        .section-title { font-size: 11pt; font-weight: 800; color: #003366; text-transform: uppercase; margin: 14px 0 10px 0; letter-spacing: 0.5px; }
+
+        .device-meta-row {
+            display: flex; justify-content: space-between; background-color: #f8f9fa; border: 1px solid #e5e7eb;
+            border-radius: 6px; padding: 12px 14px; /* Aumentato il padding verticale per renderlo più alto */
+            font-size: 9pt; color: #4b5563; margin-bottom: 12px; /* Spinto leggermente più in basso */
+        }
+        .device-meta-row strong { color: #003366; }
+
+        .credentials-grid { display: flex; gap: 12px; margin-bottom: 10px; }
+        .cred-card { 
+            flex: 1; background-color: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 8px; 
+            padding: 14px 12px; /* Aumentato il padding per dare volume ai rettangoli */
+            display: flex; flex-direction: column; gap: 8px; /* Aumentato lo spazio tra le righe di testo interne */
+        }
+        .cred-card-title { font-size: 8.5pt; font-weight: 800; color: #003366; text-transform: uppercase; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 4px; }
+        .cred-field { display: flex; flex-direction: column; gap: 3px; }
+        .cred-label { font-size: 7pt; font-weight: 700; color: #6b7280; text-transform: uppercase; }
+        .cred-value-box { background-color: #ffffff; border: 1px solid #d1d5db; border-radius: 4px; padding: 5px 6px; font-size: 9.5pt; color: #1a1a1a; font-weight: 600; }
+
+        /* ==========================================================================
+           4. APPLICATION STACK (10 SLOTS OPTIMIZATION)
+           ========================================================================== */
+        .app-stack { display: flex; flex-direction: column; gap: 8px; /* Respirazione bilanciata tra i blocchi */ }
+        .app-row { 
+            display: flex; align-items: center; border: 1px solid #003366; border-radius: 8px !important; 
+            overflow: hidden; background-color: #003366; min-height: 48px; /* Punto d'incontro perfetto: né 44px né 52px */
+            page-break-inside: avoid;
+        }
+        .app-icon-wrap { width: 48px; background-color: #003366; display: flex; align-items: center; justify-content: center; flex-shrink: 0; align-self: stretch; }
+        .app-icon { max-width: 25px; max-height: 25px; object-fit: contain; }
+        
+        .app-content { padding: 6px 14px; flex-grow: 1; }
+        .app-name, .app-inline-title { font-size: 10pt; font-weight: 700; color: #ffffff; }
+        .app-desc, .app-inline-desc { font-size: 8pt; color: #e5e7eb; margin-top: 1px; }
+
+        .app-inline-main { display: flex; justify-content: space-between; align-items: center; width: 100%; padding-right: 12px; gap: 10px; }
+        .app-inline-left { display: flex; flex-direction: column; flex-grow: 1; flex-shrink: 1; }
+        .app-inline-key { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; flex-shrink: 0; }
+        
+        .app-extra-label { font-size: 8pt; font-weight: 700; color: #cbd5e1; letter-spacing: 0.5px; }
+        .app-inline-key-value {
+            font-size: 10.5pt; font-weight: 600; color: #000000; background-color: #ffffff;
+            border: 1px solid #e5e7eb; padding: 2px 6px; border-radius: 4px; margin-top: 1px; white-space: nowrap;
+        }
+
+        /* ==========================================================================
+           5. FOOTER
+           ========================================================================== */
+        .footer-item {
+            margin-top: 16px; /* Aumentato dolcemente per allontanarsi dai rettangoli */
+            background-color: #fff7ed; border: 1px solid #fed7aa; border-left: 4px solid #f37021; 
+            padding: 10px; border-radius: 6px; text-align: center; font-weight: 700; color: #003366; font-size: 10.5pt; page-break-inside: avoid;
+        }
+        footer.footer {
+            margin-top: 14px; padding-top: 10px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; font-size: 8.5pt; color: #6b7280; page-break-inside: avoid;
+        }
+        footer.footer b { color: #1a1a1a; }
+        footer.footer .footer-item-bottom { margin-top: 0; border: none; background-color: transparent; padding: 0; font-weight: normal; color: #6b7280; font-size: 8.5pt; }
+
+    </style>
+  </head>
+
+  <body class="gjs-t-body body-font">
+    <div class="print-wrap page-container">
+      
+      <header class="main-header">
+        <div class="brand-area">
+          <img src="https://avviopcpro.github.io/data-importer/logos/logo_unieuro.png" alt="Unieuro" class="header-logo" />
+        </div>
+        <div class="header-title-group">
+          <h1 class="gjs-t-h1 document-title">Servizio Avvio PC</h1>
+          <p class="document-subtitle">Documento Tecnico di Riepilogo</p>
+        </div>
+      </header>
+
+      <div class="orange-divider"></div>
+
+      <div class="device-meta-row">
+        <div>Numero seriale del prodotto: <strong>{{PC_SERIAL}}</strong></div>
+        <div>Data Intervento: <strong>{{DATA_STAMPA}}</strong></div>
+      </div>
+
+      <div class="credentials-grid">
+        <div class="cred-card">
+          <div class="cred-card-title">Account Locale Windows</div>
+          <div class="cred-field">
+            <span class="cred-label">Nome Utente</span>
+            <div class="cred-value-box font-bold">{{LOCAL_ACCOUNT}}</div>
+          </div>
+        </div>
+        <div class="cred-card">
+          <div class="cred-card-title">Account Microsoft Correlato</div>
+          <div class="cred-field">
+            <span class="cred-label">Indirizzo Email</span>
+            <div class="cred-value-box cred-value">{{MS_EMAIL}}</div>
+          </div>
+          <div class="cred-field">
+            <span class="cred-label">Password di Accesso</span>
+            <div class="cred-value-box cred-value">{{MS_PASSWORD}}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="orange-divider"></div>
+      <h2 class="section-title">Applicazioni installate</h2>
+
+      <section class="credential-cards app-stack">
+        
+        <article class="gjs-t-border app-row">
+          <div class="app-icon-wrap"><img src="https://avviopcpro.github.io/data-importer/logos/logo_7zip.png" class="app-icon" /></div>
+          <div class="app-content"><div class="app-name">{{APPLICATION_01}}</div><div class="app-desc">{{DESCRIPTION_01}}</div></div>
+        </article>
+
+        <article class="gjs-t-border app-row">
+          <div class="app-icon-wrap"><img src="https://avviopcpro.github.io/data-importer/logos/logo_acrobat.png" class="app-icon" /></div>
+          <div class="app-content"><div class="app-name">{{APPLICATION_02}}</div><div class="app-desc">{{DESCRIPTION_02}}</div></div>
+        </article>
+
+        <article class="gjs-t-border app-row">
+          <div class="app-icon-wrap"><img src="https://avviopcpro.github.io/data-importer/logos/logo_firefox.png" class="app-icon" /></div>
+          <div class="app-content"><div class="app-name">{{APPLICATION_03}}</div><div class="app-desc">{{DESCRIPTION_03}}</div></div>
+        </article>
+
+        <article class="gjs-t-border app-row">
+          <div class="app-icon-wrap"><img src="https://avviopcpro.github.io/data-importer/logos/logo_chrome.png" class="app-icon" /></div>
+          <div class="app-content"><div class="app-name">{{APPLICATION_04}}</div><div class="app-desc">{{DESCRIPTION_04}}</div></div>
+        </article>
+
+        <article class="gjs-t-border app-row">
+          <div class="app-icon-wrap"><img src="https://avviopcpro.github.io/data-importer/logos/logo_paintnet.png" class="app-icon" /></div>
+          <div class="app-content"><div class="app-name">{{APPLICATION_05}}</div><div class="app-desc">{{DESCRIPTION_05}}</div></div>
+        </article>
+
+        <article class="gjs-t-border app-row">
+          <div class="app-icon-wrap"><img src="https://avviopcpro.github.io/data-importer/logos/logo_pdf24.png" class="app-icon" /></div>
+          <div class="app-content"><div class="app-name">{{APPLICATION_06}}</div><div class="app-desc">{{DESCRIPTION_06}}</div></div>
+        </article>
+
+        <article class="gjs-t-border app-row">
+          <div class="app-icon-wrap"><img src="https://avviopcpro.github.io/data-importer/logos/logo_vlc.png" class="app-icon" /></div>
+          <div class="app-content"><div class="app-name">{{APPLICATION_07}}</div><div class="app-desc">{{DESCRIPTION_07}}</div></div>
+        </article>
+
+        <article class="gjs-t-border app-row">
+          <div class="app-icon-wrap">
+            <img src="https://avviopcpro.github.io/data-importer/logos/logo_cyber.png" alt="Cyber" class="app-icon" />
+          </div>
+          <div class="app-content app-inline-main">
+            <div class="app-inline-left">
+              <div class="app-inline-title">{{APPLICATION_08}}</div>
+              <div class="app-inline-desc">{{DESCRIPTION_08}}</div>
+            </div>
+            <div class="app-extra mono-font app-inline-key">
+              <span class="app-extra-label">Stato</span>
+              <span class="app-inline-key-value">{{CYBER_STATUS}}</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="gjs-t-border app-row" style="display: {{SHOW_OFFICE}};">
+          <div class="app-icon-wrap">
+            <img src="{{OFFICE_LOGO_URL}}" alt="Office" class="app-icon" />
+          </div>
+          <div class="app-content app-inline-main">
+            <div class="app-inline-left">
+              <div class="app-inline-title">{{APPLICATION_09}}</div>
+              <div class="app-inline-desc">{{DESCRIPTION_09}}</div>
+            </div>
+            <div class="app-extra mono-font app-inline-key" style="display: {{OFFICE_KEY_DISPLAY}};">
+              <span class="app-extra-label">Product Key</span>
+              <span class="app-inline-key-value">{{OFFICE_KEY}}</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="gjs-t-border app-row" style="display: {{SHOW_AV}};">
+          <div class="app-icon-wrap">
+            <img src="{{AV_LOGO_URL}}" alt="Antivirus" class="app-icon" />
+          </div>
+          <div class="app-content app-inline-main">
+            <div class="app-inline-left">
+              <div class="app-inline-title">{{APPLICATION_10}}</div>
+              <div class="app-inline-desc">{{DESCRIPTION_10}}</div>
+            </div>
+            <div class="app-extra mono-font app-inline-key" style="display: {{AV_KEY_DISPLAY}};">
+              <span class="app-extra-label">Product Key</span>
+              <span class="app-inline-key-value">{{AV_KEY}}</span>
+            </div>
+          </div>
+        </article>
+
+      </section>
+
+      <section class="footer-item body-font">Conservare questo documento per eventuali future reinstallazioni.</section>
+      
+      <footer class="footer">
+        <div>Operatore: <b class="cls-4ud2he">{{OPERATOR_ID}}</b></div>
+        <div>Store ID: <b class="cls-7mfwgh">{{STORE_ID}}</b></div>
+        <div class="footer-item-bottom">Grazie per aver scelto Unieuro</div>
+      </footer>
+
+    </div>
+  </body>
+</html>
