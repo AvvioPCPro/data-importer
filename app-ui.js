@@ -26,7 +26,7 @@ const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwRw29rfoRjM5
 
 let sessionToken = '';
 let operatorDirectory = [];
-let currentOperatorId = localStorage.getItem('operator_id') || '00000';
+let currentOperatorId = '00000';   // set after a successful login (see app-core.js)
 let customAlertCallback = null;
 let serialCheckTimeout = null;
 let isMsCreated = false;
@@ -375,7 +375,7 @@ function initializeStoreDropdown() {
     const savedOperatorId = localStorage.getItem('operator_id');
     if (savedOperatorId && operatorDirectory.find((op) => String(op.id) === String(savedOperatorId))) {
       elements.operatorDropdown.value = savedOperatorId;
-      currentOperatorId = savedOperatorId;
+      if (sessionToken) currentOperatorId = savedOperatorId;   // no session: keep the header neutral
     }
   }
 }

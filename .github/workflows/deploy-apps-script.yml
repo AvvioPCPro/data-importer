@@ -1,0 +1,99 @@
+# Deploys the Apps Script backend (folder apps-script/) every time a change to
+# it reaches main. The existing web app deployment is updated in place, so the
+# /exec URL does not change. Setup steps: apps-script/README.md
+
+name: Deploy Apps Script
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps-script/*.gs'
+      - 'apps-script/*.html'
+      - 'apps-script/appsscript.json'
+  workflow_dispatch:
+
+# Never run two deployments at the same time.
+concurrency:
+  group: deploy-apps-script
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Optional: add required reviewers to the "production" environment
+    # (Settings > Environments) to make every deployment wait for approval.
+    environment: production
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check required files and secrets
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          SCRIPT_ID: ${{ secrets.SCRIPT_ID }}
+          DEPLOYMENT_ID: ${{ secrets.DEPLOYMENT_ID }}
+          WEBAPP_URL: ${{ vars.WEBAPP_URL }}
+        run: |
+          for name in CLASPRC_JSON SCRIPT_ID DEPLOYMENT_ID WEBAPP_URL; do
+            if [ -z "${!name}" ]; then echo "::error::Missing secret/variable: $name"; exit 1; fi
+          done
+          for file in apps-script/Code.gs apps-script/appsscript.json apps-script/print_template.html; do
+            if [ ! -f "$file" ]; then echo "::error::Missing file: $file (run clasp clone first)"; exit 1; fi
+          done
+          # Refuse to deploy if a secret value is hard-coded in the source.
+          if grep -nE "setProperty\('(APP_API_KEY|POWERSHELL_API_KEY|PRINT_DAEMON_KEY|ENCRYPTION_KEY|MAC_KEY|PIN_PEPPER|MS_CLIENT_SECRET|VISION_API_KEY)'" apps-script/*.gs; then
+            echo "::error::Hard-coded secrets found in apps-script/*.gs"; exit 1
+          fi
+
+      - name: Syntax check
+        run: |
+          mkdir -p /tmp/syntax
+          for file in apps-script/*.gs; do cp "$file" "/tmp/syntax/$(basename "$file" .gs).js"; done
+          for file in /tmp/syntax/*.js; do node --check "$file"; done
+          grep -q "function doGet" apps-script/*.gs
+          grep -q "function doPost" apps-script/*.gs
+
+      - name: Install clasp
+        run: npm install -g @google/clasp@2.4.2
+
+      - name: Write credentials
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          umask 077
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+
+      - name: Push code and update the deployment
+        working-directory: apps-script
+        env:
+          SCRIPT_ID: ${{ secrets.SCRIPT_ID }}
+          DEPLOYMENT_ID: ${{ secrets.DEPLOYMENT_ID }}
+        run: |
+          printf '{"scriptId":"%s","rootDir":"."}' "$SCRIPT_ID" > .clasp.json
+          clasp push --force
+          clasp deploy --deploymentId "$DEPLOYMENT_ID" --description "${GITHUB_SHA::7} ${GITHUB_ACTOR}"
+
+      - name: Health check
+        env:
+          WEBAPP_URL: ${{ vars.WEBAPP_URL }}
+        run: |
+          sleep 10
+          for attempt in 1 2 3 4 5; do
+            response=$(curl -sL --max-time 30 "$WEBAPP_URL?action=get_uuid" || true)
+            if echo "$response" | grep -q '"status":"success"'; then echo "Backend is up."; exit 0; fi
+            echo "Attempt $attempt failed: ${response:0:120}"; sleep 10
+          done
+          echo "::error::The web app did not answer correctly after deployment. Revert the commit."
+          exit 1
+
+      - name: Remove credentials
+        if: always()
+        run: rm -f "$HOME/.clasprc.json" apps-script/.clasp.json

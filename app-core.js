@@ -45,6 +45,9 @@ let msPollingTimer = null;
 // The session token now lives in sessionStorage (cleared when the tab closes).
 localStorage.removeItem(SESSION_STORAGE_KEY);   // remove the legacy copy
 sessionToken = sessionStorage.getItem(SESSION_STORAGE_KEY) || '';
+if (sessionToken) {
+  currentOperatorId = localStorage.getItem('operator_id') || '00000';
+}
 
 
 // =========================================================================
