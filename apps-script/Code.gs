@@ -789,6 +789,7 @@ function handleCheckSerial(payload, session) {
       exists: true,
       restricted: true,
       record: {
+        timestamp: row[DATA_COL.TIMESTAMP],
         operator_id: row[DATA_COL.OPERATOR_ID],
         store_id: row[DATA_COL.STORE_ID],
         pc_serial: row[DATA_COL.PC_SERIAL],
@@ -809,6 +810,7 @@ function handleCheckSerial(payload, session) {
   return {
     exists: true,
     record: {
+      timestamp: row[DATA_COL.TIMESTAMP],
       operator_id: row[DATA_COL.OPERATOR_ID],
       store_id: row[DATA_COL.STORE_ID],
       pc_serial: row[DATA_COL.PC_SERIAL],

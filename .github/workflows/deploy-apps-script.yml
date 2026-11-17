@@ -71,6 +71,19 @@ jobs:
           umask 077
           printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
 
+      - name: Validate credentials format
+        run: |
+          if ! jq -e . "$HOME/.clasprc.json" > /dev/null 2>&1; then
+            echo "::error::CLASPRC_JSON is not valid JSON. Paste the WHOLE content of .clasprc.json."
+            exit 1
+          fi
+          # Only key names are printed, never values.
+          echo "Top-level keys: $(jq -r 'keys | join(", ")' "$HOME/.clasprc.json")"
+          if ! jq -e '.token.refresh_token' "$HOME/.clasprc.json" > /dev/null 2>&1; then
+            echo "::error::CLASPRC_JSON does not have the clasp 2.4.2 format (key 'token' with a refresh_token). On your PC run: npm install -g @google/clasp@2.4.2, clasp logout, clasp login, then paste the new file into the secret."
+            exit 1
+          fi
+
       - name: Push code and update the deployment
         working-directory: apps-script
         env:
