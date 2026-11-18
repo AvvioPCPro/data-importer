@@ -301,6 +301,28 @@ select:disabled {
   opacity: 0.5;
 }
 
+.arming-status {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.btn-arm {
+  background: var(--accent-color);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-weight: bold;
+  font-size: 15px;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.btn-arm:disabled {
+  opacity: 0.5;
+}
+
 /* ---- 4. Option cards (radio / toggle) ---------------------------------- */
 .segmented-control,
 .toggle-control {
