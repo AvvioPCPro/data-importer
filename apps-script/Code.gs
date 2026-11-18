@@ -90,6 +90,9 @@ const PRINT_REQUIRES_CONFIRMATION = false;
 const PRINT_CLAIM_SECONDS = 300;
 
 const SESSION_TTL_SECONDS = 21600;      // CacheService hard limit: 6 hours
+// Customer records are kept this long (re-provisioning, license recovery),
+// then deleted by purgeExpiredRecords().
+const RETENTION_MONTHS = 24;
 const LOGIN_MAX_FAILURES = 5;
 const LOGIN_LOCKOUT_SECONDS = 900;      // 15 minutes
 const LOCK_TIMEOUT_MS = 10000;
@@ -1387,7 +1390,105 @@ function handleOcrRequest(payload, session) {
 
 
 // =========================================================================
-// 14. SPREADSHEET ADMIN TOOLS (custom menu)
+// 14. DATA RETENTION & ERASURE
+// =========================================================================
+
+/**
+ * Deletes every record older than RETENTION_MONTHS. Meant to run from a daily
+ * time trigger (see installRetentionTrigger). The audit log only stores the
+ * number of deleted rows, never customer data.
+ */
+function purgeExpiredRecords() {
+  const cutoff = new Date();
+  cutoff.setMonth(cutoff.getMonth() - RETENTION_MONTHS);
+
+  const deletedCount = withScriptLock(function () {
+    const sheet = getSheetOrThrow(SHEET_DATA);
+    const data = sheet.getDataRange().getValues();
+    let deleted = 0;
+
+    // Bottom-up so that deleting a row does not shift the rows still to check.
+    for (let i = data.length - 1; i > 0; i--) {
+      const recordDate = new Date(data[i][DATA_COL.TIMESTAMP]);
+      if (!isNaN(recordDate.getTime()) && recordDate < cutoff) {
+        sheet.deleteRow(i + 1);
+        deleted++;
+      }
+    }
+    return deleted;
+  });
+
+  writeAuditLog('system', 'retention_purge', '-', 'DELETED:' + deletedCount);
+  return deletedCount;
+}
+
+/** Run once from the menu: schedules purgeExpiredRecords every day at 03:00. */
+function installRetentionTrigger() {
+  const ui = SpreadsheetApp.getUi();
+
+  ScriptApp.getProjectTriggers().forEach(function (trigger) {
+    if (trigger.getHandlerFunction() === 'purgeExpiredRecords') {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  });
+  ScriptApp.newTrigger('purgeExpiredRecords')
+    .timeBased()
+    .everyDays(1)
+    .atHour(3)
+    .create();
+
+  writeAuditLog('admin', 'retention_trigger', '-', 'INSTALLED');
+  ui.alert('Pulizia automatica attiva',
+    'Ogni notte vengono eliminati i record piu\' vecchi di ' + RETENTION_MONTHS + ' mesi.',
+    ui.ButtonSet.OK);
+}
+
+/**
+ * Erasure on customer request: removes every record of a PC serial,
+ * whichever store registered it.
+ */
+function eraseCustomerDataFromMenu() {
+  const ui = SpreadsheetApp.getUi();
+  const answer = ui.prompt('Elimina dati cliente', 'Numero seriale del PC:', ui.ButtonSet.OK_CANCEL);
+  if (answer.getSelectedButton() !== ui.Button.OK) {
+    return;
+  }
+
+  let serial;
+  try {
+    serial = normalizeSerial(answer.getResponseText());
+  } catch (error) {
+    ui.alert('Seriale non valido.');
+    return;
+  }
+
+  const confirmation = ui.alert('Conferma eliminazione',
+    'Eliminare definitivamente tutti i dati registrati per il seriale ' + serial + '?',
+    ui.ButtonSet.YES_NO);
+  if (confirmation !== ui.Button.YES) {
+    return;
+  }
+
+  const deleted = withScriptLock(function () {
+    const sheet = getSheetOrThrow(SHEET_DATA);
+    const data = sheet.getDataRange().getValues();
+    let count = 0;
+    for (let i = data.length - 1; i > 0; i--) {
+      if (String(data[i][DATA_COL.PC_SERIAL]).trim().toUpperCase() === serial) {
+        sheet.deleteRow(i + 1);
+        count++;
+      }
+    }
+    return count;
+  });
+
+  writeAuditLog('admin', 'erase_customer_data', serial, 'DELETED:' + deleted);
+  ui.alert(deleted > 0 ? 'Eliminati ' + deleted + ' record.' : 'Nessun record trovato per questo seriale.');
+}
+
+
+// =========================================================================
+// 15. SPREADSHEET ADMIN TOOLS (custom menu)
 // =========================================================================
 
 function onOpen() {
@@ -1397,6 +1498,9 @@ function onOpen() {
     .addSeparator()
     .addItem('Aggiorna formato cifratura', 'runEncryptionUpgradeFromMenu')
     .addItem('Ruota chiavi di cifratura', 'runKeyRotationFromMenu')
+    .addSeparator()
+    .addItem('Elimina dati cliente (per seriale)', 'eraseCustomerDataFromMenu')
+    .addItem('Attiva pulizia automatica dati', 'installRetentionTrigger')
     .addToUi();
 }
 
