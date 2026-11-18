@@ -56,9 +56,19 @@ const DATA_COL = {
   MS_ACCOUNT: 10,        // encrypted
   MS_PASSWORD: 11,       // encrypted
   WINDOWS_UPDATE: 12,
-  PRINT_STATUS: 13
+  PRINT_STATUS: 13,
+  ARMED_UNTIL: 14,       // epoch milliseconds; provisioning is allowed only before this instant
+  ARM_ATTEMPTS_LEFT: 15  // deliveries still allowed while the serial is armed
 };
-const DATA_COLUMN_COUNT = 14;
+const DATA_COLUMN_COUNT = 16;
+const DATA_HEADER_ARMED_UNTIL = 'ARMED_UNTIL';
+const DATA_HEADER_ARM_ATTEMPTS = 'ARM_ATTEMPTS_LEFT';
+
+// Serial arming: PowerShell can fetch the credentials of a PC only while its
+// serial is armed. Registering a PC arms it; "Prepara ripristino" re-arms it.
+const ARM_HOURS_ON_REGISTRATION = 24;
+const ARM_HOURS_ON_RESTORE = 2;
+const ARM_MAX_DELIVERIES = 3;
 const ENCRYPTED_DATA_COLUMNS = [
   DATA_COL.LOCAL_ACCOUNT,
   DATA_COL.OFFICE_KEY,
@@ -683,6 +693,8 @@ function doPost(e) {
         return successResponse(handleDeleteRecord(payload, session));
       case 'reprint':
         return successResponse(handleReprint(payload, session));
+      case 'arm_restore':
+        return successResponse(handleArmRestore(payload, session));
       case 'ocr':
         return successResponse(handleOcrRequest(payload, session));
       case 'get_microsoft_email':
@@ -827,7 +839,8 @@ function handleCheckSerial(payload, session) {
       cyber: row[DATA_COL.CYBER],
       microsoft_account: decryptField(row[DATA_COL.MS_ACCOUNT], keys),
       microsoft_password: decryptField(row[DATA_COL.MS_PASSWORD], keys),
-      windows_update: row[DATA_COL.WINDOWS_UPDATE]
+      windows_update: row[DATA_COL.WINDOWS_UPDATE],
+      armed_until: getArmedUntilIso(row)
     }
   };
 }
@@ -852,6 +865,7 @@ function handleInsertRecord(payload, session) {
 
   return withScriptLock(function () {
     const sheet = getSheetOrThrow(SHEET_DATA);
+    ensureArmingColumns(sheet);
     const data = sheet.getDataRange().getValues();
 
     if (findRecordRow(data, record.pcSerial) !== -1) {
@@ -873,7 +887,9 @@ function handleInsertRecord(payload, session) {
       encryptField(record.msAccount),
       encryptField(record.msPassword),
       record.windowsUpdate,
-      PRINT_STATUS.PENDING
+      PRINT_STATUS.PENDING,
+      Date.now() + ARM_HOURS_ON_REGISTRATION * 3600 * 1000,
+      ARM_MAX_DELIVERIES
     ]);
 
     writeAuditLog(session.operatorId, 'insert_record', record.pcSerial, 'SUCCESS');
@@ -926,6 +942,63 @@ function handleReprint(payload, session) {
 }
 
 
+// -------------------------------------------------------------------------
+// Serial arming helpers
+// -------------------------------------------------------------------------
+
+/** Adds the arming columns (and their headers) to sheets created before this feature. */
+function ensureArmingColumns(sheet) {
+  if (sheet.getMaxColumns() < DATA_COLUMN_COUNT) {
+    sheet.insertColumnsAfter(sheet.getMaxColumns(), DATA_COLUMN_COUNT - sheet.getMaxColumns());
+  }
+  const headerCell = sheet.getRange(1, DATA_COL.ARMED_UNTIL + 1, 1, 2);
+  if (String(headerCell.getValues()[0][0]).trim() !== DATA_HEADER_ARMED_UNTIL) {
+    headerCell.setValues([[DATA_HEADER_ARMED_UNTIL, DATA_HEADER_ARM_ATTEMPTS]]);
+  }
+}
+
+/** True when the row may be delivered to PowerShell right now. */
+function isRowArmed(row) {
+  const armedUntil = Number(row[DATA_COL.ARMED_UNTIL]);
+  const attemptsLeft = Number(row[DATA_COL.ARM_ATTEMPTS_LEFT]);
+  return armedUntil > Date.now() && attemptsLeft > 0;
+}
+
+/** ISO expiry for the web app, or '' when the serial is not armed. */
+function getArmedUntilIso(row) {
+  return isRowArmed(row) ? new Date(Number(row[DATA_COL.ARMED_UNTIL])).toISOString() : '';
+}
+
+function handleArmRestore(payload, session) {
+  const serial = normalizeSerial(payload.pc_serial);
+
+  return withScriptLock(function () {
+    const sheet = getSheetOrThrow(SHEET_DATA);
+    ensureArmingColumns(sheet);
+    const data = sheet.getDataRange().getValues();
+    const rowIndex = findRecordRow(data, serial);
+
+    if (rowIndex === -1) {
+      throw new AppError('Seriale non trovato.');
+    }
+    if (String(data[rowIndex][DATA_COL.STORE_ID]).trim() !== session.storeId) {
+      writeAuditLog(session.operatorId, 'arm_restore', serial, 'DENIED');
+      throw new AppError('Non hai i permessi per preparare il ripristino di PC di altri negozi.');
+    }
+
+    const armedUntil = Date.now() + ARM_HOURS_ON_RESTORE * 3600 * 1000;
+    sheet.getRange(rowIndex + 1, DATA_COL.ARMED_UNTIL + 1, 1, 2)
+      .setValues([[armedUntil, ARM_MAX_DELIVERIES]]);
+    writeAuditLog(session.operatorId, 'arm_restore', serial, 'SUCCESS');
+    return {
+      message: 'Ripristino preparato: il PC può ricevere i dati per le prossime ' +
+        ARM_HOURS_ON_RESTORE + ' ore.',
+      armed_until: new Date(armedUntil).toISOString()
+    };
+  });
+}
+
+
 // =========================================================================
 // 10. HANDLERS: POWERSHELL PROVISIONING
 // =========================================================================
@@ -934,17 +1007,33 @@ function handleReprint(payload, session) {
 
 function handleProvisioningRequest(rawSerial) {
   const serial = normalizeSerial(rawSerial);
-  const data = getSheetOrThrow(SHEET_DATA).getDataRange().getValues();
-  const rowIndex = findRecordRow(data, serial);
 
-  if (rowIndex === -1) {
-    writeAuditLog('powershell', 'provisioning', serial, 'NOT_FOUND');
-    // Keeps the legacy response shape: { status: "not_found" }.
-    return { status: 'not_found' };
-  }
+  // The lock makes "check armed + consume one delivery" atomic.
+  return withScriptLock(function () {
+    const sheet = getSheetOrThrow(SHEET_DATA);
+    const data = sheet.getDataRange().getValues();
+    const rowIndex = findRecordRow(data, serial);
 
-  writeAuditLog('powershell', 'provisioning', serial, 'SUCCESS');
-  return buildProvisioningResponse(data[rowIndex]);
+    if (rowIndex === -1) {
+      writeAuditLog('powershell', 'provisioning', serial, 'NOT_FOUND');
+      // Keeps the legacy response shape: { status: "not_found" }.
+      return { status: 'not_found' };
+    }
+
+    const row = data[rowIndex];
+    if (!isRowArmed(row)) {
+      // Same answer as an unknown serial, so the response does not reveal that it exists.
+      writeAuditLog('powershell', 'provisioning', serial, 'NOT_ARMED');
+      return { status: 'not_found' };
+    }
+
+    const attemptsLeft = Number(row[DATA_COL.ARM_ATTEMPTS_LEFT]) - 1;
+    const cells = sheet.getRange(rowIndex + 1, DATA_COL.ARMED_UNTIL + 1, 1, 2);
+    cells.setValues([[attemptsLeft > 0 ? row[DATA_COL.ARMED_UNTIL] : 0, attemptsLeft]]);
+
+    writeAuditLog('powershell', 'provisioning', serial, 'SUCCESS (left: ' + attemptsLeft + ')');
+    return buildProvisioningResponse(row);
+  });
 }
 
 function buildProvisioningResponse(row) {

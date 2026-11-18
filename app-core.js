@@ -72,6 +72,9 @@ Object.assign(DICTIONARY, {
   alertReprintSent: 'Ristampa inviata.',
   alertNetworkDelete: 'Errore di rete. Impossibile eliminare il record.',
   alertNetworkReprint: 'Errore di rete. Richiesta fallita.',
+  alertNetworkArm: 'Errore di rete. Impossibile preparare il ripristino.',
+  armingActive: 'Pronto per il provisioning fino alle ',
+  armingInactive: 'Non pronto: premi "Prepara ripristino" prima di avviare il PC.',
   errorUnexpectedResponse: 'Risposta del server non valida. Riprova più tardi.',
   errorTimeout: 'Il server non risponde. Riprova tra qualche istante.',
   btnVerifying: 'Verifica...',
@@ -317,9 +320,27 @@ function lockFormAndPopulate(record, isRestricted) {
     .forEach((element) => { element.disabled = (element !== elements.pcSerial); });
 
   document.getElementById('btn-delete-record').disabled = isRestricted;
+  document.getElementById('btn-arm-restore').disabled = isRestricted;
+  document.getElementById('btn-arm-restore').style.display = isRestricted ? 'none' : '';
+  showArmingStatus(isRestricted ? null : record.armed_until);
   elements.reprintBtn.disabled = isRestricted;
   elements.submitBtn.disabled = true;
   elements.submitBtn.classList.add('is-disabled');
+}
+
+function showArmingStatus(armedUntilIso) {
+  const label = document.getElementById('arming-status');
+  if (armedUntilIso === null) {
+    label.textContent = '';   // restricted record: nothing to show
+    return;
+  }
+  const expiry = armedUntilIso ? new Date(armedUntilIso) : null;
+  if (expiry && !isNaN(expiry.getTime())) {
+    label.textContent = DICTIONARY.armingActive +
+      expiry.toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + '.';
+  } else {
+    label.textContent = DICTIONARY.armingInactive;
+  }
 }
 
 function populateFormFromRecord(record) {
@@ -358,6 +379,8 @@ function unlockForm() {
   isRecordLocked = false;
   elements.existingRecordBanner.style.display = 'none';
   document.getElementById('btn-delete-record').disabled = false;
+  document.getElementById('btn-arm-restore').disabled = false;
+  document.getElementById('btn-arm-restore').style.display = '';
   elements.reprintBtn.disabled = false;
   document.querySelectorAll('main.form-container input, main.form-container select')
     .forEach((element) => { element.disabled = false; });
@@ -648,6 +671,30 @@ async function handleDeleteRecord() {
     if (error.isAuthError) return;
     showAlert(error.message || DICTIONARY.alertNetworkDelete);
   }
+}
+
+async function handleArmRestore() {
+  const serial = elements.pcSerial.value.trim().toUpperCase();
+  if (!serial) {
+    showAlert(DICTIONARY.alertSerialMissing);
+    return;
+  }
+
+  const button = document.getElementById('btn-arm-restore');
+  button.disabled = true;
+  elements.loadingOverlay.classList.add('active');
+  try {
+    const result = await postAuthenticated('arm_restore', { pc_serial: serial });
+    elements.loadingOverlay.classList.remove('active');
+    showArmingStatus(result.armed_until);
+    showAlert(result.message);
+  } catch (error) {
+    elements.loadingOverlay.classList.remove('active');
+    if (!error.isAuthError) {
+      showAlert(error.message || DICTIONARY.alertNetworkArm);
+    }
+  }
+  button.disabled = false;
 }
 
 async function handleReprint() {
