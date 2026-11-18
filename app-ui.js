@@ -147,6 +147,7 @@ const elements = {
   runUpdates: document.getElementById('run-updates'),
   submitBtn: document.getElementById('submit-btn'),
   reprintBtn: document.getElementById('reprint-btn'),
+  deleteBtn: document.getElementById('delete-btn'),
   operatorBadge: document.getElementById('header-operator-id'),
   operatorModal: document.getElementById('operator-modal'),
   storeDropdown: document.getElementById('store-dropdown'),
@@ -270,6 +271,7 @@ function closeCustomAlert() {
 
 function validateForm() {
   elements.submitBtn.classList.toggle('is-disabled', !isFormValidCheck());
+  elements.deleteBtn.classList.toggle('is-danger', elements.pcSerial.value.trim() !== '');
   saveDraft();
 }
 

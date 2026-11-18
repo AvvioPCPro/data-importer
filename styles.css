@@ -301,10 +301,6 @@ select:disabled {
   opacity: 0.5;
 }
 
-.delete-by-serial {
-  margin: 24px 0 8px;
-}
-
 .arming-status {
   margin: 8px 0;
   font-size: 14px;
@@ -496,6 +492,19 @@ select:disabled {
   background: var(--disabled-bg);
   color: var(--text-muted);
   box-shadow: none;
+}
+
+/* Grey until a serial is present, red afterwards (toggled by validateForm) */
+#delete-btn {
+  background: var(--disabled-bg);
+  color: var(--text-muted);
+  box-shadow: none;
+}
+
+#delete-btn.is-danger {
+  background: var(--error-color);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
 }
 
 .final-action-card.is-disabled,

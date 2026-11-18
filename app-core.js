@@ -69,7 +69,6 @@ Object.assign(DICTIONARY, {
   alertSerialMissing: 'Numero seriale mancante.',
   alertLoginRequired: 'Autenticazione operatore richiesta.',
   alertDeleteSuccess: 'Record eliminato con successo.',
-  promptDeleteSerial: 'Inserisci il numero seriale di cui cancellare i dati registrati:',
   alertReprintSent: 'Ristampa inviata.',
   alertNetworkDelete: 'Errore di rete. Impossibile eliminare il record.',
   alertNetworkReprint: 'Errore di rete. Richiesta fallita.',
@@ -658,11 +657,9 @@ function handleDeleteRecord() {
   deleteRecordBySerial(serial);
 }
 
-// Deletes any record of the operator's store by serial, without needing the form to be filled in.
+// Bottom "Cancella dati" button: deletes the record of the serial typed in the serial field.
 function handleDeleteBySerial() {
-  const typed = window.prompt(DICTIONARY.promptDeleteSerial, elements.pcSerial.value.trim());
-  if (typed === null) return;
-  const serial = typed.trim().toUpperCase();
+  const serial = elements.pcSerial.value.trim().toUpperCase();
   if (!serial) {
     showAlert(DICTIONARY.alertSerialMissing);
     return;
