@@ -69,6 +69,7 @@ Object.assign(DICTIONARY, {
   alertSerialMissing: 'Numero seriale mancante.',
   alertLoginRequired: 'Autenticazione operatore richiesta.',
   alertDeleteSuccess: 'Record eliminato con successo.',
+  promptDeleteSerial: 'Inserisci il numero seriale di cui cancellare i dati registrati:',
   alertReprintSent: 'Ristampa inviata.',
   alertNetworkDelete: 'Errore di rete. Impossibile eliminare il record.',
   alertNetworkReprint: 'Errore di rete. Richiesta fallita.',
@@ -651,9 +652,25 @@ elements.submitBtn.onclick = async () => {
   }
 };
 
-async function handleDeleteRecord() {
+function handleDeleteRecord() {
   const serial = elements.pcSerial.value.trim().toUpperCase();
   if (!serial) return;
+  deleteRecordBySerial(serial);
+}
+
+// Deletes any record of the operator's store by serial, without needing the form to be filled in.
+function handleDeleteBySerial() {
+  const typed = window.prompt(DICTIONARY.promptDeleteSerial, elements.pcSerial.value.trim());
+  if (typed === null) return;
+  const serial = typed.trim().toUpperCase();
+  if (!serial) {
+    showAlert(DICTIONARY.alertSerialMissing);
+    return;
+  }
+  deleteRecordBySerial(serial);
+}
+
+async function deleteRecordBySerial(serial) {
   if (!confirm('⚠️ ATTENZIONE!\n\nStai per eliminare PERMANENTEMENTE il record di ' +
       serial + '.\nProcedere?')) {
     return;
@@ -664,7 +681,8 @@ async function handleDeleteRecord() {
     await postAuthenticated('delete_record', { pc_serial: serial });
     elements.loadingOverlay.classList.remove('active');
     showAlert(DICTIONARY.alertDeleteSuccess, () => {
-      unlockForm();   // also clears the fields of the deleted record
+      // Resets the form only when the deleted record is the one currently shown
+      if (elements.pcSerial.value.trim().toUpperCase() === serial) unlockForm();
     });
   } catch (error) {
     elements.loadingOverlay.classList.remove('active');
