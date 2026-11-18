@@ -397,6 +397,18 @@ function writeAuditLog(actor, action, target, outcome) {
   }
 }
 
+// Writes an audit row at most once per ttlSeconds for the same key. Used for events that a polling client
+// (the print daemon) can repeat every few seconds, such as a wrong key, so they cannot flood the sheet.
+function writeAuditLogThrottled(throttleKey, ttlSeconds, actor, action, target, outcome) {
+  const cache = CacheService.getScriptCache();
+  const cacheKey = 'audit_throttle:' + throttleKey;
+  if (cache.get(cacheKey)) {
+    return;
+  }
+  cache.put(cacheKey, '1', ttlSeconds);
+  writeAuditLog(actor, action, target, outcome);
+}
+
 function hashPin(pin, operatorId) {
   return computeHmacHex(operatorId + ':' + pin, getRequiredSecret('PIN_PEPPER'));
 }
@@ -1076,7 +1088,8 @@ function isJobPrintable(status, serial, cache) {
 
 function handleGetPrintJobs(payload) {
   if (!isValidKey(payload.daemon_key, 'PRINT_DAEMON_KEY')) {
-    writeAuditLog('print_daemon', 'get_print_jobs', '-', 'DENIED');
+    // A daemon with a wrong key retries forever: one row every 10 minutes is enough to notice it
+    writeAuditLogThrottled('get_print_jobs_denied', 600, 'print_daemon', 'get_print_jobs', '-', 'DENIED');
     throw new AppError(MSG.UNAUTHORIZED);
   }
   const storeId = normalizeStoreId(payload.store_id);
@@ -1129,7 +1142,10 @@ function handleGetPrintJobs(payload) {
       }
     }
 
-    writeAuditLog('print_daemon', 'get_print_jobs', storeId, 'DELIVERED:' + jobs.length);
+    // The daemon polls continuously: only polls that actually delivered something are worth a row
+    if (jobs.length > 0) {
+      writeAuditLog('print_daemon', 'get_print_jobs', storeId, 'DELIVERED:' + jobs.length);
+    }
     return { data: jobs };
   });
 }
