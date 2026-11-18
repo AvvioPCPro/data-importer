@@ -103,6 +103,8 @@ const SESSION_TTL_SECONDS = 21600;      // CacheService hard limit: 6 hours
 // Customer records are kept this long (re-provisioning, license recovery),
 // then deleted by purgeExpiredRecords().
 const RETENTION_MONTHS = 24;
+// AUDIT_LOG rows are kept this many days: it only serves recent troubleshooting.
+const AUDIT_LOG_RETENTION_DAYS = 7;
 const LOGIN_MAX_FAILURES = 5;
 const LOGIN_LOCKOUT_SECONDS = 900;      // 15 minutes
 const LOCK_TIMEOUT_MS = 10000;
@@ -1508,7 +1510,42 @@ function purgeExpiredRecords() {
   });
 
   writeAuditLog('system', 'retention_purge', '-', 'DELETED:' + deletedCount);
+
+  // Same nightly trigger: keeps AUDIT_LOG small
+  purgeOldAuditLog();
   return deletedCount;
+}
+
+/**
+ * Deletes the AUDIT_LOG rows older than AUDIT_LOG_RETENTION_DAYS. Rows are appended in
+ * chronological order, so the old ones are a block at the top and go in one deleteRows call.
+ */
+function purgeOldAuditLog() {
+  const cutoff = new Date(Date.now() - AUDIT_LOG_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+
+  return withScriptLock(function () {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_AUDIT_LOG);
+    if (!sheet || sheet.getLastRow() < 2) {
+      return 0;
+    }
+
+    const timestamps = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues();
+    let oldRows = 0;
+    while (oldRows < timestamps.length) {
+      const rowDate = new Date(timestamps[oldRows][0]);
+      if (isNaN(rowDate.getTime()) || rowDate >= cutoff) {
+        break;
+      }
+      oldRows++;
+    }
+
+    // Sheets refuses to delete every non-frozen row: the newest row always stays
+    oldRows = Math.min(oldRows, timestamps.length - 1);
+    if (oldRows > 0) {
+      sheet.deleteRows(2, oldRows);
+    }
+    return oldRows;
+  });
 }
 
 /** Run once from the menu: schedules purgeExpiredRecords every day at 03:00. */
